@@ -702,17 +702,21 @@ async function onSignedIn(user){
   supaUser = user;
   updateUserPill();
 
-  // Try to load cloud data; fall back to localStorage
+  // Use the current device's local cache as the source of truth when it exists.
+  // Otherwise, load the cloud snapshot for this account.
   const hadLocal = load();
-  const hadCloud = await loadFromCloud();
 
-  if(!hadCloud && !hadLocal){
-    // Brand new user — show onboarding
-    showScreen('screen-onboard');
-    initOnboarding();
-  } else {
-    launch();
+  if(!hadLocal){
+    const hadCloud = await loadFromCloud();
+    if(!hadCloud){
+      // Brand new user — show onboarding
+      showScreen('screen-onboard');
+      initOnboarding();
+      return;
+    }
   }
+
+  launch();
 }
 
 // ── Cloud sync ─────────────────────────────────────────
