@@ -698,22 +698,91 @@ async function submitAuth(){
 }
 
 // ── Called after successful sign-in ───────────────────
+function mergeTaskLists(cloudList, localList){
+  const byId = new Map();
+  (Array.isArray(cloudList) ? cloudList : []).forEach(item => { if(item && item.id != null) byId.set(item.id, item); });
+  (Array.isArray(localList) ? localList : []).forEach(item => { if(item && item.id != null && !byId.has(item.id)) byId.set(item.id, item); });
+  return [...byId.values()];
+}
+
+function mergeStoredState(localState, cloudState){
+  const mergeMaps = (cloudMap, localMap) => {
+    const merged = {};
+    const keys = new Set([...Object.keys(cloudMap || {}), ...Object.keys(localMap || {})]);
+    keys.forEach(key => {
+      const cloudValue = cloudMap?.[key];
+      const localValue = localMap?.[key];
+
+      if(key === 'chat') {
+        merged[key] = Array.isArray(cloudValue) && cloudValue.length ? cloudValue : (Array.isArray(localValue) ? localValue : []);
+        return;
+      }
+
+      if(Array.isArray(cloudValue) || Array.isArray(localValue)) {
+        merged[key] = mergeTaskLists(cloudValue, localValue);
+        return;
+      }
+
+      merged[key] = localValue !== undefined ? localValue : cloudValue;
+    });
+    return merged;
+  };
+
+  const mergedData = {
+    tasks: mergeMaps(cloudState?.data?.tasks, localState?.data?.tasks),
+    freeTasks: mergeMaps(cloudState?.data?.freeTasks, localState?.data?.freeTasks),
+    dayOv: mergeMaps(cloudState?.data?.dayOv, localState?.data?.dayOv),
+    dayOff: mergeMaps(cloudState?.data?.dayOff, localState?.data?.dayOff),
+    dayOn: mergeMaps(cloudState?.data?.dayOn, localState?.data?.dayOn),
+    chat: Array.isArray(cloudState?.data?.chat) && cloudState.data.chat.length ? cloudState.data.chat : (Array.isArray(localState?.data?.chat) ? localState.data.chat : []),
+  };
+
+  const mergedCfg = {
+    ...(cloudState?.cfg || {}),
+    ...(localState?.cfg || {}),
+  };
+
+  return { cfg: mergedCfg || cfg, data: mergedData };
+}
+
 async function onSignedIn(user){
   supaUser = user;
   updateUserPill();
 
-  // Use the current device's local cache as the source of truth when it exists.
-  // Otherwise, load the cloud snapshot for this account.
-  const hadLocal = load();
+  const storageKey = getStorageKey();
+  let localState = null;
+  try {
+    const raw = localStorage.getItem(storageKey);
+    if(raw) localState = JSON.parse(raw);
+  } catch(e){}
 
-  if(!hadLocal){
-    const hadCloud = await loadFromCloud();
-    if(!hadCloud){
-      // Brand new user — show onboarding
-      showScreen('screen-onboard');
-      initOnboarding();
-      return;
-    }
+  if(localState){
+    cfg = { ...cfg, ...localState.cfg };
+    data = {
+      tasks:{},
+      freeTasks:{},
+      dayOv:{},
+      dayOff:{},
+      dayOn:{},
+      chat:[],
+      ...localState.data
+    };
+  }
+
+  const cloudState = await loadFromCloud();
+
+  if(cloudState){
+    const merged = mergeStoredState(localState, cloudState);
+    cfg = merged.cfg;
+    data = merged.data;
+    try{ localStorage.setItem(storageKey, JSON.stringify({cfg, data})); }catch(e){}
+  }
+
+  if(!localState && !cloudState){
+    // Brand new user — show onboarding
+    showScreen('screen-onboard');
+    initOnboarding();
+    return;
   }
 
   launch();
@@ -743,27 +812,43 @@ async function syncToCloud(){
 }
 
 async function loadFromCloud(){
-  if(!supaUser) return false;
+  if(!supaUser) return null;
   try {
     const { data: rows, error } = await supa
       .from('user_data')
       .select('cfg, data')
       .eq('id', supaUser.id)
       .single();
-    if(error || !rows) return false;
-    if(rows.cfg){
-      cfg = { ...cfg, ...rows.cfg };
-      if(!cfg.automations) cfg.automations = [];
-    }
-    if(rows.data){
-      data = { tasks:{}, freeTasks:{}, dayOv:{}, dayOff:{}, dayOn:{}, chat:[], ...rows.data };
-    }
-    // Mirror to localStorage as offline cache
-    try{ localStorage.setItem(getStorageKey(), JSON.stringify({cfg, data})); }catch(e){}
-    return !!(rows.cfg && rows.cfg.geminiKey && rows.cfg.periods && rows.cfg.periods.length > 0);
+    if(error || !rows) return null;
+
+    const remoteCfg = rows.cfg ? { ...cfg, ...rows.cfg } : { ...cfg };
+    if(!remoteCfg.automations) remoteCfg.automations = [];
+
+    const remoteData = rows.data ? {
+      tasks:{},
+      freeTasks:{},
+      dayOv:{},
+      dayOff:{},
+      dayOn:{},
+      chat:[],
+      ...rows.data
+    } : {
+      tasks:{},
+      freeTasks:{},
+      dayOv:{},
+      dayOff:{},
+      dayOn:{},
+      chat:[],
+    };
+
+    return {
+      cfg: remoteCfg,
+      data: remoteData,
+      hasRemoteState: !!(rows.cfg && rows.cfg.geminiKey && rows.cfg.periods && rows.cfg.periods.length > 0) || !!rows.data,
+    };
   } catch(err){
     console.warn('Cloud load failed:', err.message);
-    return false;
+    return null;
   }
 }
 
