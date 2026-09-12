@@ -1,0 +1,2167 @@
+<!--
+  FRHSD Planner
+  Copyright (c) 2026 anvyl.cli@gmail.com
+  Licensed under the MIT License — see LICENSE file for details.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FRHSD Planner</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 52 52'%3E%3Crect x='6' y='10' width='40' height='34' rx='5' fill='%231a73e8'/%3E%3Crect x='6' y='10' width='6' height='34' rx='3' fill='%231557b0'/%3E%3Crect x='14' y='16' width='26' height='3' rx='1.5' fill='white' opacity='.9'/%3E%3Crect x='14' y='22' width='20' height='3' rx='1.5' fill='white' opacity='.7'/%3E%3Crect x='14' y='28' width='23' height='3' rx='1.5' fill='white' opacity='.7'/%3E%3Ccircle cx='38' cy='38' r='10' fill='%2334a853'/%3E%3Ctext x='38' y='42' text-anchor='middle' font-family='Arial' font-size='11' font-weight='800' fill='white'%3EAG%3C/text%3E%3C/svg%3E" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#f8f9fa;--surface:#fff;--surface2:#f1f3f4;--border:#e0e0e0;
+      --primary:#1a73e8;--pd:#1557b0;--pl:#e8f0fe;
+      --text:#202124;--ts:#5f6368;--danger:#d93025;--ok:#1e8e3e;
+      --sh:0 1px 3px rgba(0,0,0,.12);--shm:0 4px 12px rgba(0,0,0,.14);
+      --r:8px;--f:'Google Sans','Segoe UI',Arial,sans-serif;
+    }
+    body{font-family:var(--f);background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+    .screen{display:none;flex-direction:column;min-height:100vh}
+    .screen.active{display:flex}
+    #screen-app{min-height:unset;height:100vh;overflow:hidden}
+
+    /* ── Onboard ── */
+    #screen-onboard{align-items:center;justify-content:center;background:linear-gradient(135deg,#e8f0fe 0%,#f8f9fa 55%,#e6f4ea 100%);padding:16px}
+    .ocard{background:var(--surface);border-radius:20px;box-shadow:var(--shm);padding:36px 32px;width:100%;max-width:480px;text-align:center}
+    .app-logo{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:6px}
+    .logo-icon{width:50px;height:50px;flex-shrink:0}
+    .lw{display:flex;flex-direction:column;align-items:flex-start;line-height:1}
+    .lw-top{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--primary);margin-bottom:2px}
+    .lw-main{font-size:25px;font-weight:800;color:var(--text);letter-spacing:-.5px}
+    .lw-main span{color:var(--primary)}
+    .step-label{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--primary);margin-bottom:5px}
+    .step-h{font-size:17px;font-weight:700;margin-bottom:5px}
+    .step-p{font-size:13px;color:var(--ts);margin-bottom:18px}
+    .fg{text-align:left;margin-bottom:12px}
+    .fg label{display:block;font-size:11px;font-weight:700;color:var(--ts);margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px}
+    .fg input,.fg select{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--r);font-size:14px;font-family:var(--f);outline:none;transition:border-color .2s;color:var(--text);background:var(--surface)}
+    .fg input:focus,.fg select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(26,115,232,.1)}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:10px 20px;border-radius:var(--r);font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all .2s;font-family:var(--f)}
+    .bp{background:var(--primary);color:#fff}.bp:hover{background:var(--pd)}
+    .bs{background:transparent;color:var(--primary);border:1.5px solid var(--border)}.bs:hover{background:var(--pl)}
+    .bd{background:transparent;color:var(--danger);border:1.5px solid transparent}.bd:hover{background:#fce8e6}
+    .bfull{width:100%}
+    .stt{display:flex;gap:8px;flex-wrap:wrap}
+    .st{flex:1;min-width:120px;padding:9px 6px;border:1.5px solid var(--border);border-radius:var(--r);background:none;cursor:pointer;font-size:12px;font-family:var(--f);color:var(--ts);transition:all .2s;line-height:1.4}
+    .st.active{border-color:var(--primary);background:var(--pl);color:var(--primary);font-weight:600}
+
+    /* Period rows */
+    .plist{display:flex;flex-direction:column;gap:7px;margin-bottom:10px}
+    .prow{display:flex;align-items:flex-start;gap:6px;flex-wrap:wrap}
+    .prow-top{display:flex;align-items:center;gap:6px;width:100%}
+    .prow-top input{flex:1;min-width:0}
+    .prow-labs{display:flex;align-items:center;gap:4px;flex-wrap:wrap;padding-left:2px;width:100%}
+    .cdot{width:14px;height:14px;border-radius:50%;flex-shrink:0;border:2px solid rgba(0,0,0,.1)}
+    .pbadge{font-size:10px;font-weight:700;padding:2px 6px;border-radius:9px;color:#fff;flex-shrink:0;white-space:nowrap}
+    .addbtn{display:flex;align-items:center;gap:6px;background:none;border:1.5px dashed var(--border);border-radius:var(--r);padding:8px 12px;width:100%;cursor:pointer;color:var(--ts);font-size:13px;font-family:var(--f);transition:all .2s}
+    .addbtn:hover{border-color:var(--primary);color:var(--primary);background:var(--pl)}
+    /* period row pill toggles */
+    .lab-pill{display:inline-flex;align-items:center;gap:4px;padding:3px 9px 3px 7px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface2);cursor:pointer;font-size:11px;font-weight:600;color:var(--ts);transition:all .15s;user-select:none;white-space:nowrap;flex-shrink:0}
+    .lab-pill[data-on="1"]{border-color:var(--primary);background:var(--pl);color:var(--primary)}
+    .lab-pill-dot{width:7px;height:7px;border-radius:50%;background:var(--border);transition:background .15s;flex-shrink:0}
+    .lab-pill[data-on="1"] .lab-pill-dot{background:var(--primary)}
+    .ld-pills{display:flex;gap:4px;flex-wrap:wrap;padding:4px 2px 2px}
+    .ld-pill{padding:2px 8px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface2);cursor:pointer;font-size:10px;font-weight:700;color:var(--ts);transition:all .15s;user-select:none}
+    .ld-pill.on{border-color:var(--primary);background:var(--primary);color:#fff}
+    /* color swatch button */
+    .color-swatch{width:18px;height:18px;border-radius:50%;border:2px solid rgba(0,0,0,.15);cursor:pointer;flex-shrink:0;padding:0;outline:none;position:relative;overflow:hidden}
+    .color-swatch input[type=color]{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;padding:0;border:none}
+    .dots{display:flex;gap:6px;justify-content:center;margin-top:16px}
+    .dot{width:8px;height:8px;border-radius:50%;background:var(--border);transition:background .2s}
+    .dot.active{background:var(--primary)}
+
+    /* letter day picker */
+    .dpg{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:8px 0}
+    .dpb{aspect-ratio:1;border-radius:50%;border:2px solid var(--border);background:none;cursor:pointer;font-size:14px;font-weight:700;color:var(--ts);font-family:var(--f);display:flex;align-items:center;justify-content:center;transition:all .15s}
+    .dpb:hover{border-color:var(--primary);color:var(--primary);background:var(--pl)}
+    .dpb.sel{background:var(--primary);border-color:var(--primary);color:#fff}
+    .dpb.auto-btn{border-style:dashed;font-size:11px}
+
+    /* ── App header ── */
+    .app-header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 12px;height:52px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,.08);z-index:10;gap:8px}
+    .hl{display:flex;align-items:center;gap:8px;min-width:0;flex:1}
+    .hls{display:flex;align-items:center;gap:7px;flex-shrink:0}
+    .hls svg{width:26px;height:26px}
+    .hln{font-size:15px;font-weight:800;color:var(--text);letter-spacing:-.3px;white-space:nowrap}
+    .hln span{color:var(--primary)}
+    .hwk{font-size:12px;color:var(--ts);background:var(--surface2);padding:3px 10px;border-radius:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+    .hr{display:flex;align-items:center;gap:4px;flex-shrink:0}
+    .wnb{width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--ts);transition:all .2s;flex-shrink:0}
+    .wnb:hover{background:var(--surface2)}
+    .tdb{padding:5px 10px;border-radius:20px;border:1px solid var(--border);background:none;cursor:pointer;font-size:12px;font-family:var(--f);color:var(--ts);transition:all .2s;white-space:nowrap}
+    .tdb:hover{background:var(--pl);color:var(--primary);border-color:var(--primary)}
+    .icb{width:28px;height:28px;border-radius:50%;border:none;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--ts);transition:background .2s;flex-shrink:0}
+    .icb:hover{background:var(--surface2)}
+
+    /* ── Week grid ── */
+    .app-body{display:flex;flex:1;overflow:hidden;flex-direction:column}
+    .wgw{flex:1;overflow:auto}
+    .wg{display:grid;grid-template-columns:repeat(7,minmax(140px,1fr));min-width:980px;height:100%}
+    .dc{border-right:1px solid var(--border);display:flex;flex-direction:column}
+    .dc:last-child{border-right:none}
+    .dh{position:sticky;top:0;z-index:5;background:var(--surface);padding:7px 5px;border-bottom:2px solid var(--border);text-align:center;flex-shrink:0}
+    .dh.today{border-bottom-color:var(--primary)}
+    .dc.we .dh{background:#fafafa}
+    .dn{font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--ts)}
+    .dd{font-size:19px;font-weight:400;color:var(--text);margin-top:1px;line-height:1.2}
+    .dh.today .dd{background:var(--primary);color:#fff;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;margin:2px auto 0;font-size:13px;font-weight:700}
+    .dbb{margin-top:2px;font-size:10px;font-weight:700;color:var(--primary);background:var(--pl);display:inline-block;padding:1px 7px;border-radius:9px;cursor:pointer;transition:background .15s}
+    .dbb:hover{background:#c5d9fb}
+    .dbb.ov{background:#fef3cd;color:#92400e}
+    .dbb.ns{background:#f1f3f4;color:var(--ts);cursor:default;font-weight:500}
+    .dh-meta{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;margin-top:4px}
+    .day-count{min-width:18px;height:18px;border-radius:9px;background:var(--primary);color:#fff;font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;padding:0 5px;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+    .day-count.done{background:var(--ok)}
+    .day-count.empty{background:var(--surface2);color:var(--ts);border:1px solid var(--border)}
+
+    /* school/day-off toggle pill */
+    .day-toggle{margin-top:3px;display:inline-flex;align-items:center;gap:0;border-radius:9px;overflow:hidden;border:1px solid var(--border);font-size:9px;font-weight:700}
+    .day-toggle button{padding:3px 7px;border:none;cursor:pointer;font-size:10px;font-weight:700;font-family:var(--f);transition:background .15s;line-height:1;display:flex;align-items:center;justify-content:center}
+    .day-toggle button svg{width:11px;height:11px;display:block;fill:currentColor}
+    .day-toggle .dt-school{background:var(--pl);color:var(--primary)}
+    .day-toggle .dt-school.active{background:var(--primary);color:#fff}
+    .day-toggle .dt-off{background:#f1f3f4;color:var(--ts)}
+    .day-toggle .dt-off.active{background:var(--primary);color:#fff}
+    .dcont{flex:1;padding:4px;display:flex;flex-direction:column;gap:4px;overflow-y:auto}
+    .dc.we .dcont{background:#fafafa}
+
+    /* ── Slots ── */
+    .slot{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh);transition:box-shadow .15s}
+    .slot:hover{box-shadow:var(--shm)}
+    .slot.lab{border-color:#fbbc04;border-width:2px}
+    .slot-hd{display:flex;align-items:center;gap:5px;padding:5px 7px;cursor:pointer;user-select:none;min-width:0}
+    .sc{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+    .sn{font-size:11px;font-weight:700;color:var(--text);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .sp{font-size:9px;font-weight:700;padding:1px 5px;border-radius:7px;color:#fff;flex-shrink:0;white-space:nowrap}
+    .sv{font-size:9px;color:var(--ts);transition:transform .15s;flex-shrink:0}
+    .slot.open .sv{transform:rotate(180deg)}
+    /* task count badge on slot header */
+    .stc{min-width:16px;height:16px;border-radius:8px;background:var(--primary);color:#fff;font-size:9px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;padding:0 4px;flex-shrink:0;line-height:1}
+    .stc.done-all{background:var(--ok)}
+    .stc.empty{background:var(--border);color:var(--ts)}
+    .slot-bd{display:none;padding:0 7px 7px}
+    .slot.open .slot-bd{display:block}
+    .sm{font-size:10px;color:var(--ts);margin-bottom:5px;word-break:break-word}
+
+    /* dropped period */
+    .dropped{background:#fafafa;border:1px dashed #ddd;border-radius:var(--r);padding:4px 7px;display:flex;align-items:center;gap:5px;opacity:.6}
+    .dropped-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+    .dropped-name{font-size:10px;color:var(--ts);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-style:italic}
+    .dropped-tag{font-size:9px;padding:1px 5px;border-radius:7px;color:var(--ts);background:#e8eaed;flex-shrink:0;white-space:nowrap}
+
+    /* lunch */
+    .lunch{background:linear-gradient(135deg,#e6f4ea,#f8f9fa);border:1px solid #c8e6c9;border-radius:var(--r);padding:5px 8px;text-align:center}
+    .lunch-label{font-size:10px;font-weight:700;color:var(--ok)}
+    .lunch-time{font-size:9px;color:var(--ts);margin-top:1px}
+
+    /* after school */
+    .after{background:linear-gradient(135deg,#e8f0fe,#f8f9fa);border:1px solid #c5d9fb;border-radius:var(--r);padding:5px 7px}
+    .after-label{font-size:10px;font-weight:700;color:var(--primary);margin-bottom:4px;text-align:center}
+
+    /* tasks */
+    .tklist{list-style:none;margin-bottom:5px}
+    .tki{display:flex;align-items:flex-start;gap:5px;padding:3px 0;border-bottom:1px solid var(--surface2)}
+    .tki:last-child{border-bottom:none}
+    .tkc{width:13px;height:13px;border-radius:50%;border:2px solid var(--border);background:none;cursor:pointer;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+    .tkc.done{background:var(--ok);border-color:var(--ok)}
+    .tkc.done::after{content:'✓';color:#fff;font-size:8px}
+    .tkt{font-size:11px;flex:1;min-width:0;line-height:1.4;word-break:break-word}
+    .tkt.done{text-decoration:line-through;color:var(--ts)}
+    .tkd{background:none;border:none;cursor:pointer;color:var(--ts);font-size:12px;padding:0 2px;opacity:0;transition:opacity .1s;flex-shrink:0}
+    .tki:hover .tkd{opacity:1}
+
+    /* add-row: input + button — input shrinks, button stays fixed */
+    .ar{display:flex;gap:4px;align-items:center}
+    .ai{flex:1;min-width:0;font-size:11px;padding:5px 7px;border:1px solid var(--border);border-radius:5px;outline:none;font-family:var(--f);background:var(--surface2);color:var(--text);transition:border-color .15s,background .15s}
+    .ai:focus{border-color:var(--primary);background:var(--surface)}
+    .ab{flex-shrink:0;padding:5px 10px;border-radius:5px;border:none;background:var(--primary);color:#fff;cursor:pointer;font-size:11px;font-family:var(--f);font-weight:700;transition:background .15s;white-space:nowrap;line-height:1}
+    .ab:hover{background:var(--pd)}
+
+    /* after school timing row */
+    .after-input-row{display:flex;gap:4px;margin-bottom:4px;align-items:center}
+    /* hidden native time input — zero size, invisible, used only to open OS picker */
+    .after-time-native{position:absolute;opacity:0;pointer-events:none;width:0;height:0;border:none;padding:0}
+    /* clock icon button shown when no time set */
+    .after-time-btn{flex-shrink:0;width:26px;height:26px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--ts);transition:background .15s,border-color .15s;position:relative}
+    .after-time-btn:hover{background:var(--pl);border-color:var(--primary)}
+    /* pill shown once a time is selected */
+    .after-time-pill{display:none;flex-shrink:0;align-items:center;gap:3px;background:var(--pl);border:1px solid var(--primary);border-radius:12px;padding:2px 7px 2px 6px;cursor:pointer;font-size:10px;font-weight:700;color:var(--primary);white-space:nowrap;transition:background .15s}
+    .after-time-pill:hover{background:#c5d9fb}
+    .after-time-pill.has-time{display:flex}
+    .after-time-pill-x{font-size:11px;color:var(--primary);opacity:.7;margin-left:1px;font-weight:400;line-height:1}
+
+    /* ── Chat ── */
+    .cp{background:var(--surface);border-top:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;transition:height .25s}
+    .cp.col{height:42px}.cp.exp{height:300px}
+    .ct{display:flex;align-items:center;justify-content:space-between;padding:0 14px;height:42px;cursor:pointer;user-select:none;border-bottom:1px solid transparent;flex-shrink:0}
+    .cp.exp .ct{border-bottom-color:var(--border)}
+    .ctl{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600}
+    .aidot{width:7px;height:7px;border-radius:50%;background:var(--ok);animation:pulse 2s infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+    .cms{flex:1;overflow-y:auto;padding:8px 12px;display:flex;flex-direction:column;gap:7px}
+    .cp.col .cms,.cp.col .cia{display:none}
+    .msg{display:flex;gap:6px;align-items:flex-start;max-width:88%}
+    .msg.u{flex-direction:row-reverse;align-self:flex-end}
+    .mav{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;font-weight:700}
+    .msg.ai .mav{background:var(--pl);color:var(--primary)}
+    .msg.u .mav{background:var(--primary);color:#fff}
+    .mb{padding:6px 10px;border-radius:11px;font-size:12px;line-height:1.5;word-break:break-word}
+    .msg.ai .mb{background:var(--surface2);color:var(--text);border-bottom-left-radius:3px}
+    .msg.u .mb{background:var(--primary);color:#fff;border-bottom-right-radius:3px}
+    .tyd{display:flex;gap:3px;align-items:center}
+    .tyd div{width:5px;height:5px;border-radius:50%;background:var(--ts);animation:tb .8s infinite}
+    .tyd div:nth-child(2){animation-delay:.15s}.tyd div:nth-child(3){animation-delay:.3s}
+    @keyframes tb{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
+    .cia{display:flex;gap:7px;padding:7px 12px;border-top:1px solid var(--border);flex-shrink:0;align-items:center}
+    .ci{flex:1;min-width:0;padding:7px 13px;border:1.5px solid var(--border);border-radius:18px;font-size:13px;font-family:var(--f);outline:none;background:var(--surface2);color:var(--text)}
+    .ci:focus{border-color:var(--primary);background:var(--surface)}
+    .cs{width:32px;height:32px;border-radius:50%;border:none;background:var(--primary);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+    .cs:hover{background:var(--pd)}.cs:disabled{background:#a8c7fa;cursor:not-allowed}
+
+    /* ── Modals ── */
+    .mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center;padding:16px}
+    .mo.open{display:flex}
+    .md{background:var(--surface);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.2);padding:24px 24px;width:100%;max-width:420px;max-height:85vh;overflow-y:auto}
+    .md h2{font-size:17px;font-weight:700;margin-bottom:3px}
+    .mds{font-size:12px;color:var(--ts);margin-bottom:16px}
+    .mda{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}
+
+    /* automation ghost tasks */
+    .tki.auto-item{opacity:.75;background:linear-gradient(90deg,#e8f0fe33,transparent)}
+    .tki.auto-item .tkt{color:var(--primary);font-style:italic}
+    .auto-badge{font-size:9px;background:var(--pl);color:var(--primary);padding:1px 5px;border-radius:8px;white-space:nowrap;flex-shrink:0}
+
+    /* automation list rows */
+    .auto-row{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);font-size:12px}
+    .auto-row-info{flex:1;min-width:0}
+    .auto-row-title{font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .auto-row-sub{font-size:10px;color:var(--ts);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .auto-toggle{width:34px;height:20px;border-radius:10px;border:none;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0}
+    .auto-toggle.on{background:var(--primary)}.auto-toggle.off{background:#bdbdbd}
+    .auto-toggle::after{content:'';position:absolute;top:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .2s}
+    .auto-toggle.on::after{left:16px}.auto-toggle.off::after{left:2px}
+
+    /* ── Toast ── */
+    #toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%) translateY(60px);background:#202124;color:#fff;padding:8px 16px;border-radius:7px;font-size:13px;z-index:9999;transition:transform .22s;pointer-events:none;white-space:nowrap}
+    #toast.show{transform:translateX(-50%) translateY(0)}
+    ::-webkit-scrollbar{width:5px;height:5px}
+    ::-webkit-scrollbar-track{background:transparent}
+    ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+    /* ── Responsive ── */
+    @media(max-width:640px){
+      .ocard{padding:24px 16px}
+      .hwk{display:none}
+      .tdb{display:none}
+      .md{padding:20px 16px}
+      .mda{justify-content:stretch}
+      .mda .btn{flex:1;justify-content:center}
+    }
+    @media(max-width:400px){
+      .ocard{padding:20px 12px}
+      .dpg{grid-template-columns:repeat(4,1fr)}
+      .app-header{padding:0 8px}
+      .hr{gap:2px}
+    }
+
+    /* ── Auth Screen ── */
+    #screen-auth{align-items:center;justify-content:center;background:linear-gradient(135deg,#e8f0fe 0%,#f8f9fa 55%,#e6f4ea 100%);padding:16px}
+    .auth-tabs{display:flex;gap:0;border-radius:var(--r);overflow:hidden;border:1.5px solid var(--border);margin-bottom:20px}
+    .auth-tab{flex:1;padding:9px;border:none;background:var(--surface2);cursor:pointer;font-size:13px;font-weight:600;font-family:var(--f);color:var(--ts);transition:all .2s}
+    .auth-tab.active{background:var(--primary);color:#fff}
+    .auth-err{font-size:12px;color:var(--danger);background:#fce8e6;border-radius:6px;padding:8px 10px;margin-bottom:10px;display:none}
+    .auth-err.show{display:block}
+    .auth-ok{font-size:12px;color:var(--ok);background:#e6f4ea;border-radius:6px;padding:8px 10px;margin-bottom:10px;display:none}
+    .auth-ok.show{display:block}
+    .auth-divider{display:flex;align-items:center;gap:8px;margin:14px 0;color:var(--ts);font-size:11px}
+    .auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+    .auth-user-pill{display:inline-flex;align-items:center;gap:6px;background:var(--pl);border:1px solid var(--primary);border-radius:20px;padding:3px 10px 3px 6px;font-size:11px;font-weight:600;color:var(--primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px}
+    .sync-dot{width:7px;height:7px;border-radius:50%;background:var(--ok);flex-shrink:0}
+    .sync-dot.syncing{background:var(--primary);animation:pulse 1s infinite}
+    .sync-dot.err{background:var(--danger)}
+  </style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div id="screen-auth" class="screen active">
+<div class="ocard">
+  <div class="app-logo">
+    <svg class="logo-icon" viewBox="0 0 52 52" fill="none">
+      <rect x="6" y="10" width="40" height="34" rx="5" fill="#1a73e8"/>
+      <rect x="6" y="10" width="6" height="34" rx="3" fill="#1557b0"/>
+      <rect x="14" y="16" width="26" height="3" rx="1.5" fill="white" opacity=".9"/>
+      <rect x="14" y="22" width="20" height="3" rx="1.5" fill="white" opacity=".7"/>
+      <rect x="14" y="28" width="23" height="3" rx="1.5" fill="white" opacity=".7"/>
+      <rect x="14" y="34" width="16" height="3" rx="1.5" fill="white" opacity=".5"/>
+      <circle cx="38" cy="38" r="10" fill="#34a853"/>
+      <text x="38" y="42" text-anchor="middle" font-family="Arial" font-size="10" font-weight="800" fill="white">AG</text>
+    </svg>
+    <div class="lw"><span class="lw-top">FRHSD</span><span class="lw-main">Plan<span>ner</span></span></div>
+  </div>
+  <p style="font-size:13px;color:var(--ts);margin-bottom:20px">Your schedule, synced across all your devices.</p>
+
+  <div class="auth-tabs">
+    <button class="auth-tab active" id="tab-signin" onclick="switchAuthTab('signin')">Sign In</button>
+    <button class="auth-tab" id="tab-signup" onclick="switchAuthTab('signup')">Create Account</button>
+  </div>
+
+  <div id="auth-err" class="auth-err"></div>
+  <div id="auth-ok"  class="auth-ok"></div>
+
+  <div class="fg"><label>Username</label>
+    <input type="text" id="auth-email" placeholder="e.g. jsmith123" autocomplete="username"
+      onkeydown="if(event.key==='Enter')document.getElementById('auth-password').focus()"/>
+  </div>
+  <div class="fg"><label>Password</label>
+    <div style="position:relative">
+      <input type="password" id="auth-password" placeholder="••••••••" autocomplete="current-password" minlength="6"
+        style="width:100%;padding-right:38px"
+        onkeydown="if(event.key==='Enter')submitAuth()"/>
+      <button type="button" id="pw-toggle"
+        onclick="const i=document.getElementById('auth-password');const show=i.type==='password';i.type=show?'text':'password';this.innerHTML=show?`<svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94'/><path d='M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19'/><line x1='1' y1='1' x2='23' y2='23'/></svg>`:`<svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z'/><circle cx='12' cy='12' r='3'/></svg>`"
+        style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:2px;color:var(--ts);display:flex;align-items:center;justify-content:center;line-height:1">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <button class="btn bp bfull" id="auth-submit-btn" onclick="submitAuth()">Sign In →</button>
+</div>
+</div>
+
+<!-- ONBOARDING -->
+<div id="screen-onboard" class="screen">
+<div class="ocard">
+  <div class="app-logo">
+    <svg class="logo-icon" viewBox="0 0 52 52" fill="none">
+      <rect x="6" y="10" width="40" height="34" rx="5" fill="#1a73e8"/>
+      <rect x="6" y="10" width="6" height="34" rx="3" fill="#1557b0"/>
+      <rect x="14" y="16" width="26" height="3" rx="1.5" fill="white" opacity=".9"/>
+      <rect x="14" y="22" width="20" height="3" rx="1.5" fill="white" opacity=".7"/>
+      <rect x="14" y="28" width="23" height="3" rx="1.5" fill="white" opacity=".7"/>
+      <rect x="14" y="34" width="16" height="3" rx="1.5" fill="white" opacity=".5"/>
+      <circle cx="38" cy="38" r="10" fill="#34a853"/>
+      <text x="38" y="42" text-anchor="middle" font-family="Arial" font-size="10" font-weight="800" fill="white">AG</text>
+    </svg>
+    <div class="lw"><span class="lw-top">FRHSD</span><span class="lw-main">Plan<span>ner</span></span></div>
+  </div>
+  <p style="font-size:13px;color:var(--ts);margin-bottom:22px">Let's get you set up</p>
+
+  <!-- Step 1 -->
+  <div id="s1">
+    <p class="step-label">Step 1 of 3</p>
+    <h2 class="step-h">Gemini API Key</h2>
+    <p class="step-p">Saved on this device only. Used to power the AI assistant.</p>
+    <div class="fg"><label>API Key</label><input type="password" id="key-input" placeholder="AIza…" autocomplete="off"/></div>
+    <button class="btn bp bfull" onclick="s1next()">Continue →</button>
+    <p style="font-size:12px;color:var(--ts);margin-top:9px"><a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--primary)">Get a free key at Google AI Studio ↗</a></p>
+  </div>
+
+  <!-- Step 2 -->
+  <div id="s2" style="display:none">
+    <p class="step-label">Step 2 of 3</p>
+    <h2 class="step-h">School & Today's Day Letter</h2>
+    <p class="step-p">FRHSD uses letter days A–G. Pick which letter day today is so the schedule is right from day one.</p>
+    <div class="fg"><label>School type</label>
+      <div class="stt" id="s2-school">
+        <button class="st active" data-t="early">Early 🕖<br><small>Freehold, Howell, Manalapan</small></button>
+        <button class="st" data-t="late">Late 🕗<br><small>Colts Neck, FT, Marlboro</small></button>
+      </div>
+    </div>
+    <div class="fg">
+      <label>Today is Day…</label>
+      <div class="dpg" style="grid-template-columns:repeat(4,1fr)">
+        <button class="dpb" data-v="A" onclick="pickDay(this)">A</button>
+        <button class="dpb" data-v="B" onclick="pickDay(this)">B</button>
+        <button class="dpb" data-v="C" onclick="pickDay(this)">C</button>
+        <button class="dpb" data-v="D" onclick="pickDay(this)">D</button>
+        <button class="dpb" data-v="E" onclick="pickDay(this)">E</button>
+        <button class="dpb" data-v="F" onclick="pickDay(this)">F</button>
+        <button class="dpb" data-v="G" onclick="pickDay(this)">G</button>
+      </div>
+      <p style="font-size:11px;color:var(--ts)">Not sure? Skip for now — you can fix it any time by clicking a day badge on the calendar.</p>
+    </div>
+    <button class="btn bp bfull" onclick="s2next()">Continue →</button>
+  </div>
+
+  <!-- Step 3 -->
+  <div id="s3" style="display:none">
+    <p class="step-label">Step 3 of 3</p>
+    <h2 class="step-h">Your 7 Periods</h2>
+    <p class="step-p">Enter what class you have each period. Leave blank for a free/study period. Check "Double lab" if a course spans two consecutive periods (e.g. P3+P4) — then pick which letter days it runs as a double.</p>
+    <div class="plist" id="plist"></div>
+    <button class="btn bp bfull" style="margin-top:12px" onclick="s3done()">Launch Planner 🚀</button>
+  </div>
+
+  <div class="dots">
+    <div class="dot active" id="d1"></div>
+    <div class="dot" id="d2"></div>
+    <div class="dot" id="d3"></div>
+  </div>
+</div>
+</div>
+
+<!-- MAIN APP -->
+<div id="screen-app" class="screen">
+  <header class="app-header">
+    <div class="hl">
+      <div class="hls">
+        <svg viewBox="0 0 52 52" fill="none">
+          <rect x="6" y="10" width="40" height="34" rx="5" fill="#1a73e8"/>
+          <rect x="6" y="10" width="6" height="34" rx="3" fill="#1557b0"/>
+          <rect x="14" y="16" width="26" height="3" rx="1.5" fill="white" opacity=".9"/>
+          <rect x="14" y="22" width="20" height="3" rx="1.5" fill="white" opacity=".7"/>
+          <rect x="14" y="28" width="23" height="3" rx="1.5" fill="white" opacity=".7"/>
+          <rect x="14" y="34" width="16" height="3" rx="1.5" fill="white" opacity=".5"/>
+          <circle cx="38" cy="38" r="10" fill="#34a853"/>
+          <text x="38" y="42" text-anchor="middle" font-family="Arial" font-size="10" font-weight="800" fill="white">AG</text>
+        </svg>
+        <span class="hln">Plan<span>ner</span></span>
+      </div>
+      <span class="hwk" id="wklabel">–</span>
+    </div>
+    <div class="hr">
+      <button class="wnb" id="prev-btn">‹</button>
+      <button class="tdb" id="today-btn">Today</button>
+      <button class="wnb" id="next-btn">›</button>
+      <button class="icb" id="auto-btn" title="Automations" onclick="openAutoModal()">🔁</button>
+      <button class="icb" id="set-btn" title="Settings" onclick="openSettings()">⚙️</button>
+      <div id="user-pill" class="auth-user-pill" style="display:none;cursor:pointer" onclick="openSettings()" title="Signed in — click for settings">
+        <span class="sync-dot" id="sync-dot"></span>
+        <span id="user-pill-label">…</span>
+      </div>
+    </div>
+  </header>
+  <div class="app-body">
+    <div class="wgw"><div class="wg" id="wg"></div></div>
+    <div class="cp col" id="cp">
+      <div class="ct" id="ct">
+        <div class="ctl"><div class="aidot"></div>✨ AI Study Assistant</div>
+        <span id="cchev">▲</span>
+      </div>
+      <div class="cms" id="cms"></div>
+      <div class="cia">
+        <input type="text" class="ci" id="ci" placeholder="Ask me to add tasks, plan your week, explain a topic…"/>
+        <button class="cs" id="cs">➤</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="mo" id="setmod">
+  <div class="md">
+    <h2>⚙️ Settings</h2>
+    <p class="mds">Saved to this device only</p>
+    <div class="fg"><label>Gemini API Key</label><input type="password" id="sk" placeholder="AIza…"/></div>
+    <div class="fg"><label>School type</label>
+      <div class="stt" id="ss-school">
+        <button class="st" data-t="early">Early 🕖</button>
+        <button class="st" data-t="late">Late 🕗</button>
+      </div>
+    </div>
+    <div class="fg"><label>Periods (P1–P7)</label>
+      <div class="plist" id="splist"></div>
+    </div>
+    <div class="mda">
+      <button class="btn bd" onclick="clearAll()">Clear All Data</button>
+      <button class="btn bd" id="signout-btn" style="display:none" onclick="signOut()">Sign Out</button>
+      <button class="btn bs" onclick="closeMod('setmod')">Cancel</button>
+      <button class="btn bp" onclick="saveSets()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- AUTOMATIONS MODAL -->
+<div class="mo" id="automod">
+  <div class="md" style="max-width:500px">
+    <h2>🔁 Automations</h2>
+    <p class="mds">Recurring events that auto-appear on your schedule. They show with a 🔁 badge and don't count as manual tasks.</p>
+
+    <div id="auto-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px"></div>
+
+    <div style="background:var(--surface2);border-radius:var(--r);padding:12px;border:1px solid var(--border)">
+      <p style="font-size:11px;font-weight:700;color:var(--ts);text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px">＋ New Automation</p>
+
+      <!-- TRIGGER: when does it fire? -->
+      <div class="fg" style="margin-bottom:8px">
+        <label>Trigger — when does it repeat?</label>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="st active" id="auto-type-class"   onclick="setAutoType('class')"   >📚 Every time a class meets</button>
+          <button class="st"        id="auto-type-weekday" onclick="setAutoType('weekday')">📅 Every specific weekday</button>
+          <button class="st"        id="auto-type-letter"  onclick="setAutoType('letter')" >🔠 Every Day letter</button>
+          <button class="st"        id="auto-type-date"    onclick="setAutoType('date')"   >🗓️ A specific date</button>
+          <button class="st"        id="auto-type-keyword" onclick="setAutoType('keyword')">🔎 Matching task keyword</button>
+        </div>
+      </div>
+
+      <!-- class trigger: pick period -->
+      <div id="auto-class-pick" class="fg" style="margin-bottom:8px">
+        <label>Which class?</label>
+        <select id="auto-period-sel" style="padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--r);font-size:13px;font-family:var(--f);outline:none;width:100%"></select>
+      </div>
+
+      <!-- weekday trigger: checkboxes -->
+      <div id="auto-weekday-pick" class="fg" style="margin-bottom:8px;display:none">
+        <label>Which day(s) of the week?</label>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px">
+          <label style="display:flex;align-items:center;gap:3px;font-size:13px;cursor:pointer"><input type="checkbox" value="0" class="awd"/> Sun</label>
+          <label style="display:flex;align-items:center;gap:3px;font-size:13px;cursor:pointer"><input type="checkbox" value="1" class="awd"/> Mon</label>
+          <label style="display:flex;align-items:center;gap:3px;font-size:13px;cursor:pointer"><input type="checkbox" value="2" class="awd"/> Tue</label>
+          <label style="display:flex;align-items:center;gap:3px;font-size:13px;cursor:pointer"><input type="checkbox" value="3" class="awd"/> Wed</label>
+          <label style="display:flex;align-items:center;gap:3px;font-size:13px;cursor:pointer"><input type="checkbox" value="4" class="awd"/> Thu</label>
+          <label style="display:flex;align-items:center;gap:3px;font-size:13px;cursor:pointer"><input type="checkbox" value="5" class="awd"/> Fri</label>
+          <label style="display:flex;align-items:center;gap:3px;font-size:13px;cursor:pointer"><input type="checkbox" value="6" class="awd"/> Sat</label>
+        </div>
+      </div>
+
+      <!-- letter trigger: checkboxes -->
+      <div id="auto-letter-pick" class="fg" style="margin-bottom:8px;display:none">
+        <label>Which Day letter(s)?</label>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px">
+          <label style="display:flex;align-items:center;gap:3px;font-size:13px;cursor:pointer"><input type="checkbox" value="A" class="ald"/> A</label>
+          <label style="display:flex;align-items:center;gap:3px;font-size:13px;cursor:pointer"><input type="checkbox" value="B" class="ald"/> B</label>
+          <label style="display:flex;align-items:center;gap:3px;font-size:13px;cursor:pointer"><input type="checkbox" value="C" class="ald"/> C</label>
+          <label style="display:flex;align-items:center;gap:3px;font-size:13px;cursor:pointer"><input type="checkbox" value="D" class="ald"/> D</label>
+          <label style="display:flex;align-items:center;gap:3px;font-size:13px;cursor:pointer"><input type="checkbox" value="E" class="ald"/> E</label>
+          <label style="display:flex;align-items:center;gap:3px;font-size:13px;cursor:pointer"><input type="checkbox" value="F" class="ald"/> F</label>
+          <label style="display:flex;align-items:center;gap:3px;font-size:13px;cursor:pointer"><input type="checkbox" value="G" class="ald"/> G</label>
+        </div>
+      </div>
+
+      <!-- date trigger: specific date -->
+      <div id="auto-date-pick" class="fg" style="margin-bottom:8px;display:none">
+        <label>Which date should this reminder target?</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+          <div style="flex:1;min-width:140px">
+            <input type="date" id="auto-date" style="width:100%"/>
+          </div>
+          <div style="width:140px">
+            <label style="display:block;font-size:11px;font-weight:700;color:var(--ts);margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px">Days before</label>
+            <input type="number" id="auto-date-days" min="0" max="14" placeholder="0" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--r);font-size:14px;font-family:var(--f);outline:none;transition:border-color .2s;color:var(--text);background:var(--surface)"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- keyword trigger: task text match -->
+      <div id="auto-keyword-pick" class="fg" style="margin-bottom:8px;display:none">
+        <label>Which task keyword should trigger this?</label>
+        <input type="text" id="auto-keyword" placeholder="e.g. test, quiz, essay, project, vocab"/>
+      </div>
+
+      <!-- WHERE: which slot does it appear in? -->
+      <div class="fg" style="margin-bottom:8px">
+        <label>Where should it appear?</label>
+        <select id="auto-where" style="padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--r);font-size:13px;font-family:var(--f);outline:none;width:100%">
+          <option value="same">Same class slot (only for "class meets" trigger)</option>
+          <option value="lunch">🍽️ Lunch</option>
+          <option value="after">🏃 After School</option>
+        </select>
+      </div>
+
+      <!-- Event text + time -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <div class="fg" style="flex:1;min-width:160px;margin-bottom:0">
+          <label>Event / reminder text</label>
+          <input type="text" id="auto-text" placeholder="e.g. Bring notebook, Club meeting, Ask teacher…"/>
+        </div>
+        <div class="fg" style="width:105px;min-width:90px;margin-bottom:0">
+          <label>Time (optional)</label>
+          <input type="time" id="auto-time"/>
+        </div>
+      </div>
+    </div>
+
+    <div class="mda">
+      <button class="btn bs" onclick="closeMod('automod')">Close</button>
+      <button class="btn bp" onclick="addAutomation()">＋ Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- DAY OVERRIDE MODAL -->
+<div class="mo" id="daymod">
+  <div class="md" style="max-width:300px;text-align:center">
+    <h2>📅 Set Day Letter</h2>
+    <p class="mds">What letter day is <strong id="dmlabel"></strong>?<br>The rest of the week will cascade from this anchor (A→B→C→…→G).</p>
+    <div class="dpg">
+      <button class="dpb auto-btn" data-v="auto" onclick="applyDayOv(this)">Auto</button>
+      <button class="dpb" data-v="A" onclick="applyDayOv(this)">A</button>
+      <button class="dpb" data-v="B" onclick="applyDayOv(this)">B</button>
+      <button class="dpb" data-v="C" onclick="applyDayOv(this)">C</button>
+      <button class="dpb" data-v="D" onclick="applyDayOv(this)">D</button>
+      <button class="dpb" data-v="E" onclick="applyDayOv(this)">E</button>
+      <button class="dpb" data-v="F" onclick="applyDayOv(this)">F</button>
+      <button class="dpb" data-v="G" onclick="applyDayOv(this)">G</button>
+    </div>
+    <div class="mda" style="justify-content:center"><button class="btn bs" onclick="closeMod('daymod')">Close</button></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  SUPABASE AUTH + SYNC
+// ═══════════════════════════════════════════════════════
+const SUPA_URL = 'https://vfadmjasdxtrewzrjdzy.supabase.co';
+const SUPA_KEY = 'sb_publishable_Gq12mrVfucG_WSmmymvRdw_FCLP85HI';
+const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+let supaUser = null;   // current auth user, or null
+let syncTimer = null;  // debounce handle for cloud sync
+
+// ── Auth UI helpers ────────────────────────────────────
+function switchAuthTab(tab){
+  const isSignup = tab === 'signup';
+  document.getElementById('tab-signin').classList.toggle('active', !isSignup);
+  document.getElementById('tab-signup').classList.toggle('active',  isSignup);
+  document.getElementById('auth-submit-btn').textContent = isSignup ? 'Create Account →' : 'Sign In →';
+  document.getElementById('auth-password').setAttribute('autocomplete', isSignup ? 'new-password' : 'current-password');
+  clearAuthMsg();
+}
+
+function showAuthErr(msg){ setAuthMsg(msg, true); }
+function showAuthOk(msg) { setAuthMsg(msg, false); }
+function clearAuthMsg()  { setAuthMsg('', null); }
+function setAuthMsg(msg, isErr){
+  const errEl = document.getElementById('auth-err');
+  const okEl  = document.getElementById('auth-ok');
+  errEl.textContent = msg || '';
+  okEl.textContent  = msg || '';
+  errEl.classList.toggle('show', !!isErr && !!msg);
+  okEl.classList.toggle('show',  isErr === false && !!msg);
+}
+
+async function submitAuth(){
+  const rawInput = document.getElementById('auth-email').value.trim();
+  const pass     = document.getElementById('auth-password').value;
+  const isSignup = document.getElementById('tab-signup').classList.contains('active');
+  const btn      = document.getElementById('auth-submit-btn');
+
+  if(!rawInput){ showAuthErr('Please enter a username.'); return; }
+  if(!pass || pass.length < 6){ showAuthErr('Password must be at least 6 characters.'); return; }
+
+  const looksLikeEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rawInput);
+
+  // Use a stable internal email alias so the app can keep username/password-only UX
+  // without exposing an email field to the user.
+  const email = looksLikeEmail
+    ? rawInput
+    : `${encodeURIComponent(rawInput).replace(/%/g, 'x')}@frhsdplanner.app`;
+
+  clearAuthMsg();
+  btn.disabled = true;
+  btn.textContent = isSignup ? 'Creating account…' : 'Signing in…';
+
+  try {
+    if(isSignup){
+      const { data, error } = await supa.auth.signUp({
+        email,
+        password: pass,
+        options: { data: { display_name: rawInput } }
+      });
+      if(error) throw error;
+
+      if(data.session){
+        await onSignedIn(data.session.user);
+      } else if(data.user){
+        showAuthOk('Account created! Please sign in with your username and password.');
+      } else {
+        showAuthOk('Account created! Please sign in with your username and password.');
+      }
+    } else {
+      const { data, error } = await supa.auth.signInWithPassword({ email, password: pass });
+      if(error){
+        if(error.message.toLowerCase().includes('invalid')) throw new Error('Incorrect username or password.');
+        throw error;
+      }
+      await onSignedIn(data.user);
+    }
+  } catch(err){
+    const message = (err && err.message) || 'Authentication failed.';
+    if(message.toLowerCase().includes('email rate limit exceeded')){
+      showAuthErr('This app uses a username/password flow, but Supabase is still trying to send a confirmation email. Please disable email confirmation in Supabase Auth settings, then try again.');
+    } else {
+      showAuthErr(message);
+    }
+  } finally {
+    btn.disabled = false;
+    btn.textContent = isSignup ? 'Create Account →' : 'Sign In →';
+  }
+}
+
+// ── Called after successful sign-in ───────────────────
+async function onSignedIn(user){
+  supaUser = user;
+  updateUserPill();
+
+  // Try to load cloud data; fall back to localStorage
+  const hadLocal = load();
+  const hadCloud = await loadFromCloud();
+
+  if(!hadCloud && !hadLocal){
+    // Brand new user — show onboarding
+    showScreen('screen-onboard');
+    initOnboarding();
+  } else {
+    launch();
+  }
+}
+
+// ── Cloud sync ─────────────────────────────────────────
+// Debounced: every save() schedules a cloud push 2s later
+function scheduleSyncToCloud(){
+  if(!supaUser) return;
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(syncToCloud, 2000);
+  setSyncDot('syncing');
+}
+
+async function syncToCloud(){
+  if(!supaUser) return;
+  try {
+    const { error } = await supa
+      .from('user_data')
+      .upsert({ id: supaUser.id, cfg, data, updated_at: new Date().toISOString() }, { onConflict: 'id' });
+    if(error) throw error;
+    setSyncDot('ok');
+  } catch(err){
+    console.warn('Sync failed:', err.message);
+    setSyncDot('err');
+  }
+}
+
+async function loadFromCloud(){
+  if(!supaUser) return false;
+  try {
+    const { data: rows, error } = await supa
+      .from('user_data')
+      .select('cfg, data')
+      .eq('id', supaUser.id)
+      .single();
+    if(error || !rows) return false;
+    if(rows.cfg){
+      cfg = { ...cfg, ...rows.cfg };
+      if(!cfg.automations) cfg.automations = [];
+    }
+    if(rows.data){
+      data = { tasks:{}, freeTasks:{}, dayOv:{}, dayOff:{}, dayOn:{}, chat:[], ...rows.data };
+    }
+    // Mirror to localStorage as offline cache
+    try{ localStorage.setItem(getStorageKey(), JSON.stringify({cfg, data})); }catch(e){}
+    return !!(rows.cfg && rows.cfg.geminiKey && rows.cfg.periods && rows.cfg.periods.length > 0);
+  } catch(err){
+    console.warn('Cloud load failed:', err.message);
+    return false;
+  }
+}
+
+// ── Sign out ───────────────────────────────────────────
+async function signOut(){
+  if(!confirm('Sign out of your account?')) return;
+  closeMod('setmod');
+
+  try {
+    await supa.auth.signOut();
+  } catch (err) {
+    console.warn('Sign out request failed:', err);
+  }
+
+  supaUser = null;
+  updateUserPill();
+  showScreen('screen-auth');
+  toast('Signed out');
+}
+
+// ── User pill in header ────────────────────────────────
+function updateUserPill(){
+  const pill  = document.getElementById('user-pill');
+  const label = document.getElementById('user-pill-label');
+  if(!pill || !label) return;
+  if(supaUser){
+    // display_name was stored as the original username at sign-up
+    const name = supaUser.user_metadata?.display_name
+      || (supaUser.email || '').replace(/@frhsdplanner\.app$/, '')
+      || '…';
+    label.textContent = name;
+    pill.style.display = '';
+    document.getElementById('signout-btn').style.display = '';
+  } else {
+    pill.style.display = 'none';
+    const sb = document.getElementById('signout-btn');
+    if(sb) sb.style.display = 'none';
+  }
+}
+
+function setSyncDot(state){
+  const dot = document.getElementById('sync-dot');
+  if(!dot) return;
+  dot.className = 'sync-dot' + (state === 'syncing' ? ' syncing' : state === 'err' ? ' err' : '');
+  dot.title = state === 'ok' ? 'Synced to cloud' : state === 'syncing' ? 'Syncing…' : 'Sync error';
+}
+
+function toast(msg){
+  const el = document.getElementById('toast');
+  if(!el) return;
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(()=>el.classList.remove('show'), 1800);
+}
+
+// ── Screen helper ──────────────────────────────────────
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ═══════════════════════════════════════════════════════
+//  FRHSD ROTATING DROP SCHEDULE  (verified from Sced.png)
+//
+//  TWO INDEPENDENT CYCLES:
+//    Morning (Blocks 1-3): periods P1–P4 rotate, one dropped each day
+//    Afternoon (Blocks 4-5): periods P5–P7 rotate, one dropped each day
+//
+//  DAY_MORNING[letter] = [B1, B2, B3]   (3 of P1–P4)
+//  DAY_AFTERNOON[letter] = [B4, B5]     (2 of P5–P7)
+//
+//       A        B        C        D        E        F        G
+//  B1:  P1       P4       P3       P2       P1       P4       P3
+//  B2:  P2       P1       P4       P3       P2       P1       P4
+//  B3:  P3       P1🔬     P1       P4       P3       P1       P7(*)
+//  ---LUNCH---
+//  B4:  P5       P7       P6       P5       P7       P6       P5
+//  B5:  P6       P5       P7       P6       P5       P7       P6
+//
+//  (*) Day G Block 3 = Spanish 2 = P7 per image
+// ═══════════════════════════════════════════════════════
+const LETTERS = ['A','B','C','D','E','F','G'];
+
+const DAY_MORNING = {
+  A: [1,2,3],
+  B: [4,1,2],
+  C: [3,4,1],
+  D: [2,3,4],
+  E: [1,2,3],
+  F: [4,1,2],
+  G: [3,4,7],
+};
+
+const DAY_AFTERNOON = {
+  A: [5,6],
+  B: [7,5],
+  C: [6,7],
+  D: [5,6],
+  E: [7,5],
+  F: [6,7],
+  G: [5,6],
+};
+
+// Combined for backwards compatibility with getDropped and AI context
+const DAY_SLOTS = {
+  A: [...DAY_MORNING.A, ...DAY_AFTERNOON.A],
+  B: [...DAY_MORNING.B, ...DAY_AFTERNOON.B],
+  C: [...DAY_MORNING.C, ...DAY_AFTERNOON.C],
+  D: [...DAY_MORNING.D, ...DAY_AFTERNOON.D],
+  E: [...DAY_MORNING.E, ...DAY_AFTERNOON.E],
+  F: [...DAY_MORNING.F, ...DAY_AFTERNOON.F],
+  G: [...DAY_MORNING.G, ...DAY_AFTERNOON.G],
+};
+
+// Bell times by slot position 1-5 (slot 3 is last before lunch, slot 4 is first after)
+const BELL_E = [null,
+  {s:'7:30 AM',e:'8:37 AM'},{s:'8:42 AM',e:'9:49 AM'},{s:'9:54 AM',e:'11:01 AM'},
+  {s:'11:47 AM',e:'12:54 PM'},{s:'12:59 PM',e:'2:06 PM'}
+];
+const BELL_L = [null,
+  {s:'8:24 AM',e:'9:31 AM'},{s:'9:36 AM',e:'10:43 AM'},{s:'10:48 AM',e:'11:55 AM'},
+  {s:'12:41 PM',e:'1:48 PM'},{s:'1:53 PM',e:'3:00 PM'}
+];
+const LUNCH_E = {s:'11:06 AM',e:'11:41 AM'};
+const LUNCH_L = {s:'12:00 PM',e:'12:35 PM'};
+
+const PCOLS = ['#4285f4','#ea4335','#fbbc04','#34a853','#9334e6','#fa7b17','#24c1e0'];
+const PAL   = ['#4285f4','#ea4335','#fbbc04','#34a853','#9334e6','#fa7b17','#24c1e0','#e52592','#00796b'];
+const DAYS  = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const WE    = new Set([0,6]);
+
+// Anchor: Sep 9 2025 = Day A (index 0)
+const ANCHOR = new Date(2025, 8, 9);
+const MODEL  = 'gemini-3.8-flash';
+const LS_KEY = 'frhsd_v5';
+
+function getStorageKey(){
+  return supaUser && supaUser.id ? `${LS_KEY}:${supaUser.id}` : `${LS_KEY}:guest`;
+}
+
+// ─── STATE ───────────────────────────────────────────────
+let cfg = { geminiKey:'', school:'early', periods:[], automations:[] };
+// automations: [{id, type:'class'|'weekday'|'letter', match:periodNum|[weekdayNums]|[letters], text, time, enabled}]
+
+let data = {
+  tasks:{},        // "YYYY-MM-DD_P#" → [{id,text,done}]
+  freeTasks:{},    // "YYYY-MM-DD-after" → [{id,text,done,time}]  (after-school)
+  dayOv:{},        // "YYYY-MM-DD" → "A".."G"
+  dayOff:{},       // "YYYY-MM-DD" → true  (explicit day-off override)
+  dayOn:{},        // "YYYY-MM-DD" → true  (explicit school-day override for weekends)
+  chat:[],
+};
+
+let wkStart = null, chatOpen = false, dayModalDate = null, anchorPick = null;
+
+// ─── STORAGE ─────────────────────────────────────────────
+function save(){
+  const storageKey = getStorageKey();
+  try{ localStorage.setItem(storageKey, JSON.stringify({cfg,data})); }catch(e){}
+  scheduleSyncToCloud();
+}
+function load(){
+  const storageKey = getStorageKey();
+  try{
+    const r=localStorage.getItem(storageKey);
+    if(!r)return false;
+    const p=JSON.parse(r);
+    if(p.cfg){
+      cfg={...cfg,...p.cfg};
+      if(!cfg.automations) cfg.automations=[];
+    }
+    if(p.data) data={tasks:{},freeTasks:{},dayOv:{},dayOff:{},dayOn:{},chat:[],...p.data};
+    return true;
+  }catch(e){return false}
+}
+
+// ─── SCHEDULE LOGIC ──────────────────────────────────────
+// Count schooldays (Mon-Fri, non-weekend) between two dates.
+// Returns positive if d > from, negative if d < from.
+function schooldayDiff(from, to){
+  if(from.getTime()===to.getTime()) return 0;
+  let count=0, step=to>from?1:-1, cur=new Date(from);
+  while(cur.getTime()!==to.getTime()){
+    cur.setDate(cur.getDate()+step);
+    if(!WE.has(cur.getDay())) count+=step;
+  }
+  return count;
+}
+
+function getDayLetter(date){
+  const d=dateOnly(date);
+  const ds=toDS(d);
+
+  // 1. Exact override for this date
+  if(data.dayOv[ds]) return data.dayOv[ds];
+
+  // 2. Weekends get null (unless user forced a day on them via dayOn)
+  if(WE.has(d.getDay()) && !data.dayOn[ds]) return null;
+
+  // 3. Find nearest override anchor to cascade from
+  //    Search dayOv keys for school days only; find the one with smallest abs distance
+  const ovKeys=Object.keys(data.dayOv);
+  if(ovKeys.length>0){
+    let bestKey=null, bestDist=Infinity;
+    ovKeys.forEach(k=>{
+      const kd=dateOnly(new Date(k+'T12:00:00'));
+      // Only use overrides that are on school days (or dayOn days)
+      if(WE.has(kd.getDay()) && !data.dayOn[k]) return;
+      const dist=Math.abs(schooldayDiff(kd,d));
+      if(dist<bestDist){ bestDist=dist; bestKey=k; }
+    });
+    if(bestKey){
+      const anchorDate=dateOnly(new Date(bestKey+'T12:00:00'));
+      const anchorLetter=data.dayOv[bestKey];
+      const anchorIdx=LETTERS.indexOf(anchorLetter);
+      const diff=schooldayDiff(anchorDate, d);
+      return LETTERS[((anchorIdx+diff)%7+7)%7];
+    }
+  }
+
+  // 4. Fall back to the static anchor: Sep 9 2025 = Day A
+  const anchor=dateOnly(ANCHOR);
+  const diff=schooldayDiff(anchor, d);
+  return LETTERS[((diff%7)+7)%7];
+}
+
+function getSlotsForLetter(letter){ return DAY_SLOTS[letter]||[]; }
+
+function getDropped(letter){
+  const vis=new Set(getSlotsForLetter(letter));
+  return [1,2,3,4,5,6,7].filter(p=>!vis.has(p));
+}
+
+function bell(slotPos){
+  const b=cfg.school==='late'?BELL_L[slotPos]:BELL_E[slotPos];
+  return b?`${b.s}–${b.e}`:'';
+}
+function lunchTime(){
+  const l=cfg.school==='late'?LUNCH_L:LUNCH_E;
+  return `${l.s}–${l.e}`;
+}
+
+// ─── DATE UTILS ──────────────────────────────────────────
+function dateOnly(d){const n=new Date(d);n.setHours(0,0,0,0);return n}
+function toDS(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+function getWkStart(d){const r=dateOnly(d);r.setDate(r.getDate()-r.getDay());return r}
+function addDays(d,n){const r=new Date(d);r.setDate(r.getDate()+n);return r}
+function fmtWk(s){
+  const e=addDays(s,6),mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return s.getMonth()===e.getMonth()?`${mo[s.getMonth()]} ${s.getDate()}–${e.getDate()}`:`${mo[s.getMonth()]} ${s.getDate()} – ${mo[e.getMonth()]} ${e.getDate()}`;
+}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;')}
+
+// ─── DAY OFF HELPERS ─────────────────────────────────────
+// A day is "off" if: (a) user explicitly marked it off, OR (b) it's a weekend and user hasn't explicitly turned it on
+function isDayOff(date){
+  const ds=toDS(dateOnly(date));
+  if(data.dayOff[ds]) return true;                 // explicit day-off override
+  if(data.dayOn[ds])  return false;                // explicit school-day override (e.g. weekend turned on)
+  return WE.has(date.getDay());                    // default: weekends are off, weekdays are on
+}
+
+function getTaskStatsForList(list){
+  const items = Array.isArray(list) ? list : [];
+  const total = items.length;
+  const done = items.filter(t => t && t.done).length;
+  return { total, done, pending: total - done };
+}
+
+function getDayTaskSummary(ds){
+  let total = 0;
+  let pending = 0;
+
+  Object.keys(data.tasks).forEach(key => {
+    if(!key.startsWith(`${ds}_P`)) return;
+    const stats = getTaskStatsForList(data.tasks[key]);
+    total += stats.total;
+    pending += stats.pending;
+  });
+
+  Object.keys(data.freeTasks).forEach(key => {
+    if(!key.startsWith(`${ds}-`)) return;
+    const stats = getTaskStatsForList(data.freeTasks[key]);
+    total += stats.total;
+    pending += stats.pending;
+  });
+
+  return { total, pending };
+}
+
+function toggleDayOff(ds){
+  const date=new Date(ds+'T12:00:00');
+  const isWknd=WE.has(date.getDay());
+  if(isDayOff(date)){
+    // Turn it into a school day
+    delete data.dayOff[ds];
+    if(isWknd) data.dayOn[ds]=true;
+  } else {
+    // Turn it into a day off
+    delete data.dayOn[ds];
+    if(!isWknd) data.dayOff[ds]=true;
+  }
+  save(); renderWeek();
+}
+
+// Set day to a specific state — used by the two-button school/off toggle
+function setDayState(ds, makeOff){
+  const date=new Date(ds+'T12:00:00');
+  const isWknd=WE.has(date.getDay());
+  const currentlyOff=isDayOff(date);
+  if(makeOff === currentlyOff) return; // already in requested state, nothing to do
+  if(makeOff){
+    delete data.dayOn[ds];
+    if(!isWknd) data.dayOff[ds]=true;
+  } else {
+    delete data.dayOff[ds];
+    if(isWknd) data.dayOn[ds]=true;
+  }
+  save(); renderWeek();
+}
+
+
+function s1next(){
+  const v=document.getElementById('key-input').value.trim();
+  if(!v){alert('Please enter your Gemini API key.');return}
+  cfg.geminiKey=v;
+  document.getElementById('s1').style.display='none';
+  document.getElementById('s2').style.display='block';
+  document.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active',i<2));
+}
+
+function s2next(){
+  const t=document.querySelector('#s2-school .st.active');
+  cfg.school=t?t.dataset.t:'early';
+  if(anchorPick){
+    // Store as anchor override on today so cascade computes from it
+    data.dayOv[toDS(dateOnly(new Date()))]=anchorPick;
+  }
+  document.getElementById('s2').style.display='none';
+  document.getElementById('s3').style.display='block';
+  document.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active',i<3));
+  try{ buildPForm('plist'); }catch(e){ console.error('buildPForm error',e); }
+}
+
+function s3done(){
+  try{ collectP('plist'); }catch(e){ console.error('collectP error',e); }
+  save(); launch();
+}
+
+function pickDay(btn){
+  document.querySelectorAll('#s2 .dpb').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+  anchorPick=btn.dataset.v; // always a letter A-G now
+}
+
+function setDot(n){
+  document.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active',i<n));
+}
+
+function show(id,val){document.getElementById(id).style.display=val}
+
+function initOnboarding(){
+  document.getElementById('key-input').addEventListener('keydown',e=>{if(e.key==='Enter')s1next()});
+  document.querySelectorAll('#s2-school .st').forEach(t=>t.addEventListener('click',()=>{
+    document.querySelectorAll('#s2-school .st').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+  }));
+}
+
+// ─── PERIOD ROWS ─────────────────────────────────────────
+function buildPForm(listId){
+  const list=document.getElementById(listId);
+  list.innerHTML='';
+  for(let p=1;p<=7;p++){
+    const def=cfg.periods.find(x=>x.num===p);
+    addPRow(listId, def||{num:p,name:'',color:PCOLS[p-1],isLab:false,labDays:[]}, p-1);
+  }
+}
+
+function addPRow(listId,def,idx){
+  const list=document.getElementById(listId);
+  const pNum=def?.num??(idx+1);
+  const color=def?.color??PCOLS[(pNum-1)%PCOLS.length];
+  const name=def?.name??'';
+  const isLab=def?.isLab??false;
+  const labDays=def?.labDays??[];
+  const row=document.createElement('div');
+  row.className='prow'; row.dataset.p=pNum;
+  row.innerHTML=`
+    <div class="prow-top">
+      <button class="color-swatch" style="background:${color}" title="Pick color">
+        <input type="color" value="${color}" oninput="updateRowColor(this,${pNum})"/>
+      </button>
+      <span class="pbadge" style="background:${color}" id="pb-${listId}-${pNum}">P${pNum}</span>
+      <input type="text" placeholder="Course name (blank=free)" value="${esc(name)}" data-color="${color}"
+        style="flex:1;min-width:0;padding:5px 8px;border:1.5px solid var(--border);border-radius:6px;font-size:12px;font-family:var(--f);outline:none"/>
+      <div class="lab-pill" data-on="${isLab?'1':'0'}" onclick="toggleLabPill(this)" title="Toggle double lab">
+        <span class="lab-pill-dot"></span>Lab
+      </div>
+    </div>
+    <div class="prow-labs ld-pills" style="display:${isLab?'flex':'none'}">
+      ${LETTERS.map(l=>`<span class="ld-pill${labDays.includes(l)?' on':''}" data-v="${l}" onclick="this.classList.toggle('on')">${l}</span>`).join('')}
+    </div>
+  `;
+  list.appendChild(row);
+}
+
+function toggleLabPill(pill){
+  const on=pill.dataset.on==='1';
+  pill.dataset.on=on?'0':'1';
+  pill.closest('.prow').querySelector('.prow-labs').style.display=on?'none':'flex';
+}
+
+function updateRowColor(inp, pNum){
+  const color=inp.value;
+  const row=inp.closest('.prow');
+  // update swatch background
+  inp.parentElement.style.background=color;
+  // update badge
+  const badge=row.querySelector('.pbadge');
+  if(badge) badge.style.background=color;
+  // store on text input
+  const ti=row.querySelector('input[type="text"]');
+  if(ti) ti.dataset.color=color;
+}
+
+function collectP(listId){
+  cfg.periods=[];
+  document.querySelectorAll(`#${listId} .prow`).forEach(row=>{
+    const pNum=parseInt(row.dataset.p,10);
+    const inp=row.querySelector('input[type="text"]');
+    const name=inp?.value.trim()||'';
+    const color=inp?.dataset.color||PCOLS[(pNum-1)%PCOLS.length];
+    const isLab=row.querySelector('.lab-pill')?.dataset.on==='1'||false;
+    const labDays=isLab?[...row.querySelectorAll('.ld-pill.on')].map(c=>c.dataset.v):[];
+    if(name) cfg.periods.push({num:pNum,name,color,isLab,labDays});
+  });
+}
+
+// ─── LAUNCH ──────────────────────────────────────────────
+function launch(){
+  showScreen('screen-app');
+  updateUserPill();
+  wkStart=getWkStart(new Date());
+  renderWeek();
+  initChat();
+  initSettings();
+  document.getElementById('prev-btn').onclick=()=>{wkStart=addDays(wkStart,-7);renderWeek()};
+  document.getElementById('next-btn').onclick=()=>{wkStart=addDays(wkStart,7);renderWeek()};
+  document.getElementById('today-btn').onclick=()=>{wkStart=getWkStart(new Date());renderWeek()};
+  document.getElementById('set-btn').onclick=openSettings;
+}
+
+// ─── WEEK RENDER ─────────────────────────────────────────
+function renderWeek(){
+  const grid=document.getElementById('wg');
+  grid.innerHTML='';
+  const today=dateOnly(new Date());
+  document.getElementById('wklabel').textContent=fmtWk(wkStart);
+
+  for(let i=0;i<7;i++){
+    const date=addDays(wkStart,i);
+    const isWknd=WE.has(date.getDay());
+    const isToday=date.getTime()===today.getTime();
+    const ds=toDS(date);
+    const letter=getDayLetter(date);
+    const ov=data.dayOv[ds]!=null;
+    const off=isDayOff(date);
+    const daySummary=getDayTaskSummary(ds);
+
+    const col=document.createElement('div');
+    col.className=`dc${isWknd?' we':''}`;
+
+    // Day-letter badge (only shown on school days for non-weekends; still shown on weekdays even if off)
+    let badge='';
+    if(isWknd && off){
+      badge=`<div class="dbb ns">Weekend</div>`;
+    } else if(off){
+      badge=`<div class="dbb ns">Day off</div>`;
+    } else {
+      badge=`<div class="dbb${ov?' ov':''}" onclick="openDayMod('${ds}')" title="Click to set day letter">Day ${letter??'?'}${ov?' ✎':''}</div>`;
+    }
+
+    const countHtml = `<div class="day-count ${daySummary.pending===0?'empty':'done'}" title="${daySummary.total} task${daySummary.total!==1?'s':''} on this day">${daySummary.pending}</div>`;
+
+    // School / Day off toggle — all 7 days
+    const schoolActive = !off;
+    const schoolSVG=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3L2 9v1h2v10h4v-5h4v5h4V10h2V9L12 3zm0 2.3L18 9.2V19h-2v-5H8v5H6V9.2L12 5.3z"/></svg>`;
+    const beachSVG=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17.3c2.4-1.6 4.8-2.4 9-2.4 4.1 0 6.6.8 9 2.4V19H3v-1.7zm1.9-4.2h13.4v1.5H4.9v-1.5zm2.5-3.9h8.1c.7 0 1.3.6 1.3 1.3v.4H6.1v-.4c0-.7.6-1.3 1.3-1.3zm1.5 1.4h5.1c.2 0 .4.1.4.4v.4H8.5v-.4c0-.3.2-.4.4-.4zm-1.7 5.7h8.6v1.1H7.2v-1.1z"/></svg>`;
+    const toggleHtml=`
+      <div class="day-toggle">
+        <button class="dt-school${schoolActive?' active':''}" onclick="setDayState('${ds}',false)" title="Mark as school day">${schoolSVG}</button>
+        <button class="dt-off${!schoolActive?' active':''}"    onclick="setDayState('${ds}',true)"  title="Mark as day off">${beachSVG}</button>
+      </div>`;
+
+    const hdr=document.createElement('div');
+    hdr.className=`dh${isToday?' today':''}`;
+    hdr.innerHTML=`<div class="dn">${SHORT[date.getDay()]}</div><div class="dd">${date.getDate()}</div><div class="dh-meta">${badge}${countHtml}</div>${toggleHtml}`;
+    col.appendChild(hdr);
+
+    const cont=document.createElement('div');
+    cont.className='dcont';
+
+    if(off){
+      cont.appendChild(freeCard(ds, isWknd?'🌅 Free Day':'🏖️ Day Off'));
+    } else if(isWknd){
+      // Weekend in school mode: show all periods as simple task slots, no bell times or schedule
+      if(cfg.periods.length){
+        cfg.periods.forEach(pDef=>{
+          cont.appendChild(buildWeekendSlot(ds, pDef));
+        });
+      } else {
+        cont.appendChild(freeCard(ds,'🏫 School Day'));
+      }
+      cont.appendChild(afterCard(ds));
+    } else if(!letter){
+      cont.appendChild(freeCard(ds,'🏫 No School'));
+    } else {
+      const morning=DAY_MORNING[letter];   // [B1, B2, B3]
+      const afternoon=DAY_AFTERNOON[letter]; // [B4, B5]
+      const dropped=getDropped(letter);
+
+      // ── Morning: 3 blocks, but a double lab consumes 2 consecutive slots ──
+      // Walk through morning slots; if a period is a double lab today it takes slot i and i+1,
+      // so the period that was supposed to be in slot i+1 gets displaced (shown as dropped).
+      const morningElems = [];
+      let skipNext = false;
+      for(let i = 0; i < morning.length; i++){
+        const pNum = morning[i];
+        const slotPos = i + 1; // bell positions 1, 2, 3
+        if(skipNext){
+          // This slot was consumed by the previous double lab — show it as displaced/dropped
+          const pDef = cfg.periods.find(p => p.num === pNum);
+          if(pDef){
+            morningElems.push(buildDroppedSlot(ds, pDef, true)); // true = displaced by lab
+          }
+          skipNext = false;
+          continue;
+        }
+        const pDef = cfg.periods.find(p => p.num === pNum);
+        const isLabToday = pDef && pDef.isLab && pDef.labDays.includes(letter);
+        const elems = buildSlot(ds, pNum, slotPos, letter);
+        elems.forEach(e => morningElems.push(e));
+        if(isLabToday) skipNext = true; // next morning slot is consumed
+      }
+      morningElems.forEach(e => cont.appendChild(e));
+
+      // Lunch
+      const lunchKey=`${ds}-lunch`;
+      const lc=document.createElement('div');
+      lc.className='lunch';
+      lc.innerHTML=`
+        <div class="lunch-label">🍽️ Lunch &nbsp;<span style="font-weight:400;color:var(--ts)">${lunchTime()}</span></div>
+        <ul class="tklist" id="tl-${lunchKey}" style="margin:3px 0 3px"></ul>
+        <div class="ar">
+          <input class="ai" placeholder="Lunch note…" id="ti-${lunchKey}" onkeydown="if(event.key==='Enter')addFree('${ds}','lunch')"/>
+          <button class="ab" onclick="addFree('${ds}','lunch')">+</button>
+        </div>
+      `;
+      renderFreeTasks(lc.querySelector(`#tl-${lunchKey}`), lunchKey);
+      cont.appendChild(lc);
+
+      // ── Afternoon: 2 blocks, same double-lab displacement logic ──
+      const afternoonElems = [];
+      let skipNextAft = false;
+      for(let i = 0; i < afternoon.length; i++){
+        const pNum = afternoon[i];
+        const slotPos = i + 4; // bell positions 4, 5
+        if(skipNextAft){
+          const pDef = cfg.periods.find(p => p.num === pNum);
+          if(pDef){
+            afternoonElems.push(buildDroppedSlot(ds, pDef, true));
+          }
+          skipNextAft = false;
+          continue;
+        }
+        const pDef = cfg.periods.find(p => p.num === pNum);
+        const isLabToday = pDef && pDef.isLab && pDef.labDays.includes(letter);
+        const elems = buildSlot(ds, pNum, slotPos, letter);
+        elems.forEach(e => afternoonElems.push(e));
+        if(isLabToday) skipNextAft = true;
+      }
+      afternoonElems.forEach(e => cont.appendChild(e));
+
+      // Dropped periods (not in schedule at all today) — shown faded so you can still add work
+      // Exclude periods that were displaced by a double lab (they already appear inline above)
+      const displacedByLab = new Set();
+      for(let i = 0; i < morning.length - 1; i++){
+        const pDef = cfg.periods.find(p => p.num === morning[i]);
+        if(pDef && pDef.isLab && pDef.labDays.includes(letter)) displacedByLab.add(morning[i+1]);
+      }
+      for(let i = 0; i < afternoon.length - 1; i++){
+        const pDef = cfg.periods.find(p => p.num === afternoon[i]);
+        if(pDef && pDef.isLab && pDef.labDays.includes(letter)) displacedByLab.add(afternoon[i+1]);
+      }
+
+      if(dropped.length){
+        const dp=document.createElement('div');
+        dp.style.cssText='margin-top:3px;display:flex;flex-direction:column;gap:3px';
+        dropped.forEach(pNum=>{
+          if(displacedByLab.has(pNum)) return; // already shown inline
+          const pDef=cfg.periods.find(p=>p.num===pNum);
+          if(pDef) dp.appendChild(buildDroppedSlot(ds, pDef, false));
+        });
+        if(dp.children.length) cont.appendChild(dp);
+      }
+
+      // After school
+      cont.appendChild(afterCard(ds));
+    }
+
+    col.appendChild(cont);
+    grid.appendChild(col);
+  }
+}
+
+// ─── BUILD SLOT ───────────────────────────────────────────
+// Always returns an array of elements (1 normally, 2 on double-lab days)
+function buildSlot(ds, pNum, slotPos, letter){
+  const pDef=cfg.periods.find(p=>p.num===pNum);
+
+  if(!pDef){
+    const el=document.createElement('div');
+    el.className='dropped'; el.style.opacity='0.4';
+    el.innerHTML=`<div class="dropped-dot" style="background:#bbb"></div><div class="dropped-name">P${pNum} — free</div>`;
+    return [el];
+  }
+
+  const isLabToday=pDef.isLab && pDef.labDays.includes(letter);
+  const taskKey=`${ds}_P${pNum}`;
+  const tasks=data.tasks[taskKey]||[];
+  const pending=tasks.filter(t=>!t.done).length;
+  const tagColor=PCOLS[(pNum-1)%PCOLS.length];
+
+  function makeSlotEl(slotIdx, label, showTasks){
+    const bellStr=bell(slotIdx);
+    const el=document.createElement('div');
+    el.className=`slot${isLabToday?' lab':''}`;
+    el.dataset.key=taskKey;
+    const totalTasks=tasks.length;
+    const doneTasks=tasks.filter(t=>t.done).length;
+    const badgeClass=totalTasks===0?'empty':doneTasks===totalTasks?'done-all':'';
+    const badgeLabel=totalTasks===0?'0':`${totalTasks-doneTasks}`;
+    el.innerHTML=`
+      <div class="slot-hd" onclick="this.parentElement.classList.toggle('open')">
+        <div class="sc" style="background:${pDef.color}"></div>
+        <div class="sn" title="${esc(pDef.name)}">${esc(pDef.name)}</div>
+        <div class="sp" style="background:${tagColor}">${label}</div>
+        <span class="stc ${badgeClass}" title="${totalTasks} task${totalTasks!==1?'s':''}">${badgeLabel}</span>
+        <div class="sv">▼</div>
+      </div>
+      <div class="slot-bd">
+        <div class="sm">🕐 ${bellStr}${isLabToday?' &nbsp;·&nbsp; 🔬 Lab':''}</div>
+        ${showTasks?`
+        <ul class="tklist" id="tl-${taskKey}"></ul>
+        <div class="ar">
+          <input class="ai" placeholder="Add task…" id="ti-${taskKey}" onkeydown="if(event.key==='Enter')addTask('${taskKey}')"/>
+          <button class="ab" onclick="addTask('${taskKey}')">+</button>
+        </div>`:'<p style="font-size:10px;color:var(--ts);font-style:italic">Tasks shared with first period ↑</p>'}
+      </div>
+    `;
+    if(showTasks) renderTasks(el.querySelector(`#tl-${taskKey}`), taskKey);
+    return el;
+  }
+
+  if(isLabToday){
+    // Return both the lab slot AND a faded continuation block
+    // renderWeek will then insert the displaced period after these two
+    const el1=makeSlotEl(slotPos, `P${pNum} 🔬`, true);
+    const el2=document.createElement('div');
+    el2.className='slot';
+    el2.style.cssText='opacity:0.65;border:2px solid #fbbc04;background:#fffdf0';
+    el2.innerHTML=`
+      <div class="slot-hd" style="padding:4px 7px;cursor:default">
+        <div class="sc" style="background:${pDef.color}"></div>
+        <div class="sn" style="color:var(--ts);font-style:italic" title="${esc(pDef.name)}">${esc(pDef.name)}</div>
+        <div class="sp" style="background:${tagColor}">P${pNum} 🔬</div>
+        <div class="dropped-tag" style="margin-left:auto">cont.</div>
+      </div>
+    `;
+    return [el1, el2];
+  } else {
+    return [makeSlotEl(slotPos, `P${pNum}`, true)];
+  }
+}
+
+// ─── DROPPED SLOT (expandable task list for dropped periods) ──
+// displaced=true means this period was bumped by a double lab (shown inline in schedule order)
+// displaced=false means it's a normally dropped period (shown at bottom)
+function buildDroppedSlot(ds, pDef, displaced){
+  const taskKey=`${ds}_P${pDef.num}`;
+  const tasks=data.tasks[taskKey]||[];
+  const pending=tasks.filter(t=>!t.done).length;
+  const totalTasks=tasks.length;
+  const badgeClass=totalTasks===0?'empty':pending===0?'done-all':'';
+  const tag = displaced
+    ? `Lab`
+    : `P${pDef.num} dropped${pending?' · '+pending+' task'+(pending!==1?'s':''):''}`;
+  const el=document.createElement('div');
+  el.className='slot';
+  el.style.cssText='opacity:0.72;border:1px dashed #ccc;background:#fafafa';
+  el.dataset.key=taskKey;
+  el.innerHTML=`
+    <div class="slot-hd" onclick="this.parentElement.classList.toggle('open')" style="padding:4px 7px">
+      <div class="dropped-dot" style="background:${pDef.color};width:8px;height:8px;border-radius:50%;flex-shrink:0"></div>
+      <div class="sn" style="color:var(--ts);font-style:italic" title="${esc(pDef.name)}">${esc(pDef.name)}</div>
+      <div class="dropped-tag">${tag}</div>
+      <span class="stc ${badgeClass}" title="${totalTasks} task${totalTasks!==1?'s':''}">${totalTasks===0?'0':pending}</span>
+      <div class="sv" style="font-size:9px;color:var(--ts)">▼</div>
+    </div>
+    <div class="slot-bd">
+      <ul class="tklist" id="tl-${taskKey}"></ul>
+      <div class="ar">
+        <input class="ai" placeholder="Add work for this class…" id="ti-${taskKey}" onkeydown="if(event.key==='Enter')addTask('${taskKey}')"/>
+        <button class="ab" onclick="addTask('${taskKey}')">+</button>
+      </div>
+    </div>
+  `;
+  renderTasks(el.querySelector(`#tl-${taskKey}`), taskKey);
+  return el;
+}
+
+// ─── WEEKEND SLOT (no bell times, no schedule structure) ─────
+function buildWeekendSlot(ds, pDef){
+  const taskKey=`${ds}_P${pDef.num}`;
+  const tasks=data.tasks[taskKey]||[];
+  const pending=tasks.filter(t=>!t.done).length;
+  const tagColor=PCOLS[(pDef.num-1)%PCOLS.length];
+  const totalTasks=tasks.length;
+  const badgeClass=totalTasks===0?'empty':pending===0?'done-all':'';
+  const el=document.createElement('div');
+  el.className='slot';
+  el.dataset.key=taskKey;
+  el.innerHTML=`
+    <div class="slot-hd" onclick="this.parentElement.classList.toggle('open')">
+      <div class="sc" style="background:${pDef.color}"></div>
+      <div class="sn" title="${esc(pDef.name)}">${esc(pDef.name)}</div>
+      <div class="sp" style="background:${tagColor}">P${pDef.num}</div>
+      <span class="stc ${badgeClass}" title="${totalTasks} task${totalTasks!==1?'s':''}">${totalTasks===0?'0':pending}</span>
+      <div class="sv">▼</div>
+    </div>
+    <div class="slot-bd">
+      <div class="sm">${pending?`${pending}/${tasks.length} task${tasks.length!==1?'s':''} left`:'No tasks yet'}</div>
+      <ul class="tklist" id="tl-${taskKey}"></ul>
+      <div class="ar">
+        <input class="ai" placeholder="Add task…" id="ti-${taskKey}" onkeydown="if(event.key==='Enter')addTask('${taskKey}')"/>
+        <button class="ab" onclick="addTask('${taskKey}')">+</button>
+      </div>
+    </div>
+  `;
+  renderTasks(el.querySelector(`#tl-${taskKey}`), taskKey);
+  return el;
+}
+
+// ─── FREE / AFTER CARDS ───────────────────────────────────
+function freeCard(ds, label){
+  const el=document.createElement('div');
+  el.className='slot'; el.style.border='1px dashed var(--border)';
+  el.innerHTML=`
+    <div class="slot-hd" onclick="this.parentElement.classList.toggle('open')">
+      <div class="sn" style="color:var(--ts)">${label}</div><div class="sv">▼</div>
+    </div>
+    <div class="slot-bd">
+      <ul class="tklist" id="tl-${ds}-free"></ul>
+      <div class="ar">
+        <input class="ai" placeholder="Add reminder…" id="ti-${ds}-free" onkeydown="if(event.key==='Enter')addFree('${ds}','free')"/>
+        <button class="ab" onclick="addFree('${ds}','free')">+</button>
+      </div>
+    </div>
+  `;
+  renderFreeTasks(el.querySelector(`#tl-${ds}-free`),`${ds}-free`);
+  return el;
+}
+
+function afterCard(ds){
+  const fKey=`${ds}-after`;
+  const tasks=data.freeTasks[fKey]||[];
+  const el=document.createElement('div');
+  el.className='after';
+  el.innerHTML=`
+    <div class="after-label">🏃 After School</div>
+    <ul class="tklist" id="tl-${fKey}"></ul>
+    <div class="after-input-row">
+      <div style="position:relative;flex-shrink:0">
+        <input class="after-time-native" type="time" id="tm-${fKey}" tabindex="-1"
+          onchange="afterTimeChanged('${ds}')"/>
+        <button class="after-time-btn" id="tb-${fKey}" title="Set time"
+          onclick="document.getElementById('tm-${fKey}').showPicker?document.getElementById('tm-${fKey}').showPicker():document.getElementById('tm-${fKey}').click()">🕐</button>
+        <span class="after-time-pill" id="tp-${fKey}"
+          onclick="document.getElementById('tm-${fKey}').showPicker?document.getElementById('tm-${fKey}').showPicker():document.getElementById('tm-${fKey}').click()">
+          <span id="tpl-${fKey}"></span><span class="after-time-pill-x" onclick="event.stopPropagation();afterTimeClear('${ds}')">×</span>
+        </span>
+      </div>
+      <input class="ai" placeholder="Activity or note…" id="ti-${fKey}"
+        onkeydown="if(event.key==='Enter')addAfter('${ds}')"/>
+      <button class="ab" onclick="addAfter('${ds}')">+</button>
+    </div>
+  `;
+  renderAfterTasks(el.querySelector(`#tl-${fKey}`), fKey);
+  return el;
+}
+
+// ─── TASK CRUD ────────────────────────────────────────────
+function addTask(key){
+  const inp=document.getElementById(`ti-${key}`);
+  const txt=inp?.value.trim(); if(!txt)return;
+  if(!data.tasks[key])data.tasks[key]=[];
+  data.tasks[key].push({id:Date.now()+Math.random(),text:txt,done:false});
+  inp.value=''; save(); renderWeek();
+}
+
+// Called by AI to write a task — returns true/false
+function aiAddTask(dateStr, periodNum, taskText){
+  const key=`${dateStr}_P${periodNum}`;
+  if(!data.tasks[key])data.tasks[key]=[];
+  data.tasks[key].push({id:Date.now()+Math.random(),text:taskText,done:false});
+  save(); renderWeek(); return true;
+}
+
+function addFree(ds,suffix){
+  const fKey=`${ds}-${suffix}`;
+  const inp=document.getElementById(`ti-${fKey}`);
+  const txt=inp?.value.trim(); if(!txt)return;
+  if(!data.freeTasks[fKey])data.freeTasks[fKey]=[];
+  data.freeTasks[fKey].push({id:Date.now()+Math.random(),text:txt,done:false,time:''});
+  inp.value=''; save();
+  renderWeek();
+}
+
+function addAfter(ds){
+  const fKey=`${ds}-after`;
+  const inp=document.getElementById(`ti-${fKey}`);
+  const timInp=document.getElementById(`tm-${fKey}`);
+  const txt=inp?.value.trim(); if(!txt)return;
+  const time=timInp?.value||'';
+  if(!data.freeTasks[fKey])data.freeTasks[fKey]=[];
+  data.freeTasks[fKey].push({id:Date.now()+Math.random(),text:txt,done:false,time});
+  inp.value='';
+  // Reset time pill
+  if(timInp) timInp.value='';
+  afterTimeClear(ds);
+  save();
+  renderWeek();
+}
+
+// Called when the native time input changes — show the pill, hide the clock button
+function afterTimeChanged(ds){
+  const fKey=`${ds}-after`;
+  const val=document.getElementById(`tm-${fKey}`)?.value;
+  const pill=document.getElementById(`tp-${fKey}`);
+  const btn=document.getElementById(`tb-${fKey}`);
+  const lbl=document.getElementById(`tpl-${fKey}`);
+  if(val && pill && btn && lbl){
+    // Format as 12h for display
+    const [h,m]=val.split(':');
+    const hr=parseInt(h,10);
+    lbl.textContent=`${hr===0?12:hr>12?hr-12:hr}:${m} ${hr<12?'AM':'PM'}`;
+    pill.classList.add('has-time');
+    btn.style.display='none';
+  }
+}
+
+// Called by the × on the pill — clear time and go back to clock button
+function afterTimeClear(ds){
+  const fKey=`${ds}-after`;
+  const pill=document.getElementById(`tp-${fKey}`);
+  const btn=document.getElementById(`tb-${fKey}`);
+  if(pill) pill.classList.remove('has-time');
+  if(btn)  btn.style.display='';
+}
+
+function toggleTask(key,id){
+  const t=(data.tasks[key]||[]).find(t=>t.id==id); if(t)t.done=!t.done; save(); renderWeek();
+}
+function delTask(key,id){
+  data.tasks[key]=(data.tasks[key]||[]).filter(t=>t.id!=id); save(); renderWeek();
+}
+function toggleFree(fKey,id){
+  const t=(data.freeTasks[fKey]||[]).find(t=>t.id==id); if(t)t.done=!t.done; save();
+  renderWeek();
+}
+function delFree(fKey,id){
+  data.freeTasks[fKey]=(data.freeTasks[fKey]||[]).filter(t=>t.id!=id); save();
+  renderWeek();
+}
+
+function renderTasks(el,key){
+  if(!el)return;
+  const tasks=data.tasks[key]||[];
+  // Parse date and period from key e.g. "2026-09-08_P3"
+  let autoItems=[];
+  try{
+    const m=key.match(/^(\d{4}-\d{2}-\d{2})_P(\d+)$/);
+    if(m) autoItems=getAutoTasksForSlot(new Date(m[1]+'T12:00:00'), parseInt(m[2],10));
+  }catch(e){}
+  el.innerHTML='';
+  // Auto items first (ghost)
+  autoItems.forEach(t=>{
+    const li=document.createElement('li'); li.className='tki auto-item';
+    li.innerHTML=`<span style="font-size:12px;flex-shrink:0">🔁</span>${t.time?`<span style="font-size:10px;color:var(--primary);font-weight:700;white-space:nowrap">${t.time}</span>`:''}<span class="tkt">${esc(t.text)}</span><span class="auto-badge">auto</span>`;
+    el.appendChild(li);
+  });
+  // Real tasks
+  tasks.forEach(t=>{
+    const li=document.createElement('li'); li.className='tki';
+    li.innerHTML=`<div class="tkc${t.done?' done':''}" onclick="toggleTask('${key}',${t.id})" tabindex="0"></div><span class="tkt${t.done?' done':''}">${esc(t.text)}</span><button class="tkd" onclick="delTask('${key}',${t.id})">×</button>`;
+    el.appendChild(li);
+  });
+}
+function renderFreeTasks(el,fKey){
+  if(!el)return;
+  const tasks=data.freeTasks[fKey]||[];
+  let autoItems=[];
+  // Inject lunch automations if this is a lunch card
+  try{
+    if(fKey.endsWith('-lunch')){
+      const ds=fKey.replace('-lunch','');
+      autoItems=getAutoTasksForLunch(new Date(ds+'T12:00:00'));
+    }
+  }catch(e){}
+  el.innerHTML='';
+  autoItems.forEach(t=>{
+    const li=document.createElement('li'); li.className='tki auto-item';
+    li.innerHTML=`<span style="font-size:12px;flex-shrink:0">🔁</span>${t.time?`<span style="font-size:10px;color:var(--primary);font-weight:700;white-space:nowrap">${t.time}</span>`:''}<span class="tkt">${esc(t.text)}</span><span class="auto-badge">auto</span>`;
+    el.appendChild(li);
+  });
+  tasks.forEach(t=>{
+    const li=document.createElement('li'); li.className='tki';
+    li.innerHTML=`<div class="tkc${t.done?' done':''}" onclick="toggleFree('${fKey}',${t.id})" tabindex="0"></div><span class="tkt${t.done?' done':''}">${esc(t.text)}</span><button class="tkd" onclick="delFree('${fKey}',${t.id})">×</button>`;
+    el.appendChild(li);
+  });
+}
+function renderAfterTasks(el,fKey){
+  if(!el)return;
+  const tasks=data.freeTasks[fKey]||[];
+  let autoItems=[];
+  try{
+    const ds=fKey.replace('-after','');
+    autoItems=getAutoTasksForAfter(new Date(ds+'T12:00:00'));
+  }catch(e){}
+  el.innerHTML='';
+  autoItems.forEach(t=>{
+    const li=document.createElement('li'); li.className='tki auto-item';
+    li.innerHTML=`<span style="font-size:12px;flex-shrink:0">🔁</span>${t.time?`<span style="font-size:10px;color:var(--primary);font-weight:700;white-space:nowrap">${t.time}</span>`:''}<span class="tkt">${esc(t.text)}</span><span class="auto-badge">auto</span>`;
+    el.appendChild(li);
+  });
+  tasks.forEach(t=>{
+    const li=document.createElement('li'); li.className='tki';
+    const timeLabel=t.time?`<span style="font-size:10px;color:var(--primary);font-weight:700;white-space:nowrap">${t.time}</span>`:'';
+    li.innerHTML=`<div class="tkc${t.done?' done':''}" onclick="toggleFree('${fKey}',${t.id})" tabindex="0"></div>${timeLabel}<span class="tkt${t.done?' done':''}">${esc(t.text)}</span><button class="tkd" onclick="delFree('${fKey}',${t.id})">×</button>`;
+    el.appendChild(li);
+  });
+}
+
+// ─── DAY OVERRIDE ────────────────────────────────────────
+function openDayMod(ds){
+  dayModalDate=ds;
+  const d=new Date(ds+'T12:00:00');
+  document.getElementById('dmlabel').textContent=`${DAYS[d.getDay()]} ${d.getMonth()+1}/${d.getDate()}`;
+  const cur=data.dayOv[ds];
+  document.querySelectorAll('#daymod .dpb').forEach(b=>b.classList.toggle('sel',cur?b.dataset.v===cur:b.dataset.v==='auto'));
+  openMod('daymod');
+}
+function applyDayOv(btn){
+  if(!dayModalDate)return;
+  const v=btn.dataset.v;
+  if(v==='auto') delete data.dayOv[dayModalDate]; else data.dayOv[dayModalDate]=v;
+  document.querySelectorAll('#daymod .dpb').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+  save(); renderWeek(); closeMod('daymod');
+  toast(v==='auto'?'Override cleared — week recalculated ✓':`Set to Day ${v} — week recalculated ✓`);
+}
+
+// ─── SETTINGS ────────────────────────────────────────────
+function initSettings(){
+  document.querySelectorAll('#ss-school .st').forEach(t=>t.addEventListener('click',()=>{
+    document.querySelectorAll('#ss-school .st').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+  }));
+  document.querySelectorAll('.mo').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)closeMod(o.id)}));
+}
+function openSettings(){
+  document.getElementById('sk').value=cfg.geminiKey;
+  document.querySelectorAll('#ss-school .st').forEach(t=>t.classList.toggle('active',t.dataset.t===cfg.school));
+  buildPForm('splist');
+  const sob = document.getElementById('signout-btn');
+  if(sob) sob.style.display = supaUser ? '' : 'none';
+  openMod('setmod');
+}
+function saveSets(){
+  const k=document.getElementById('sk').value.trim(); if(k)cfg.geminiKey=k;
+  const t=document.querySelector('#ss-school .st.active'); if(t)cfg.school=t.dataset.t;
+  collectP('splist'); save(); closeMod('setmod'); renderWeek(); toast('Settings saved ✓');
+}
+function clearAll(){
+  if(!confirm('Clear all data on this device? This will also sign you out.'))return;
+  const currentKey = getStorageKey();
+  localStorage.removeItem(LS_KEY);
+  localStorage.removeItem(currentKey);
+  for(let i=localStorage.length-1;i>=0;i--){
+    const key=localStorage.key(i);
+    if(key && key.startsWith(`${LS_KEY}:`)) localStorage.removeItem(key);
+  }
+  supa.auth.signOut().finally(()=>location.reload());
+}
+
+// ─── MODAL ───────────────────────────────────────────────
+function openMod(id){document.getElementById(id).classList.add('open')}
+function closeMod(id){document.getElementById(id).classList.remove('open')}
+
+// ─── AI CHAT ─────────────────────────────────────────────
+function initChat(){
+  const panel=document.getElementById('cp');
+  document.getElementById('ct').onclick=()=>{
+    chatOpen=!chatOpen;
+    panel.className=`cp ${chatOpen?'exp':'col'}`;
+    document.getElementById('cchev').textContent=chatOpen?'▼':'▲';
+    if(chatOpen&&!document.getElementById('cms').children.length) appendAI(greeting());
+  };
+  document.getElementById('cs').onclick=sendChat;
+  document.getElementById('ci').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat()}});
+}
+
+function greeting(){
+  const h=new Date().getHours();
+  const g=h<12?'Good morning':h<17?'Good afternoon':'Good evening';
+  const letter=getDayLetter(new Date());
+  const info=letter?`Today is **Day ${letter}**. Periods today: ${getSlotsForLetter(letter).map(p=>`P${p}`).join(', ')}.`:'Today is a weekend or no-school day.';
+  const courses=cfg.periods.map(p=>`P${p.num}: ${p.name}${p.isLab ? ` (double lab on days ${p.labDays.join(',')})` : ''}`).join(', ');
+  return `${g}! 👋 I'm your FRHSD study assistant.\n\n${info}\nYour courses: **${courses||'(none set)'}**\nWeek: **${fmtWk(wkStart)}**\n\nI can help plan your week, spot upcoming tests, and build a timed study schedule. I can also **add tasks directly to your schedule** — just ask! E.g. "Add algebra test to Wednesday" or "Plan my study sessions for this week".`;
+}
+
+async function sendChat(){
+  const inp=document.getElementById('ci'), sbtn=document.getElementById('cs');
+  const txt=inp.value.trim(); if(!txt)return;
+  inp.value=''; sbtn.disabled=true;
+  appendUser(txt); data.chat.push({role:'user',text:txt});
+  const tid=showTyping();
+  try{
+    const reply=await callGemini(txt);
+    removeTyping(tid); appendAI(reply);
+    data.chat.push({role:'model',text:reply});
+    if(data.chat.length>40)data.chat=data.chat.slice(-40);
+    save();
+  }catch(err){
+    removeTyping(tid);
+    appendAI(`⚠️ ${err.message}`);
+  }
+  sbtn.disabled=false; inp.focus();
+}
+
+async function callGemini(msg){
+  if(!cfg.geminiKey) throw new Error('No API key — open Settings ⚙️');
+
+  // Build current week context string
+  const wkCtx=buildWeekCtx();
+  const todayLetter=getDayLetter(new Date());
+  const courseList=cfg.periods.map(p=>`P${p.num}: ${p.name}${p.isLab ? ` (double lab on days: ${p.labDays.join(',')})` : ''}`).join('\n');
+
+  const sys=`You are a helpful AI study assistant for an FRHSD student.
+
+FRHSD uses a 7-day LETTER rotating schedule (Days A–G).
+Each day has 5 class periods: 3 morning, then LUNCH, then 2 afternoon.
+Schedule:
+Day A: P1,P2,P3 | lunch | P5,P6
+Day B: P4,P1,P2 | lunch | P7,P5
+Day C: P6,P4,P1 | lunch | P3,P7
+Day D: P5,P6,P4 | lunch | P2,P3
+Day E: P7,P5,P6 | lunch | P1,P2
+Day F: P3,P7,P5 | lunch | P4,P1
+Day G: P2,P3,P7 | lunch | P6,P4
+
+Student's courses:
+${courseList||'(none set)'}
+
+School: ${cfg.school==='late'?'Late (8:24 AM)':'Early (7:30 AM)'}
+Today: ${todayLetter?`Day ${todayLetter}`:'Weekend/holiday'}
+Week of ${fmtWk(wkStart)}:
+${wkCtx}
+
+IMPORTANT — You can add tasks to the student's planner by calling the special function in your reply.
+When the student asks you to add a task, include a JSON block at the END of your reply, like this:
+<TASKS>
+[{"date":"YYYY-MM-DD","period":3,"task":"Study chapter 5"},{"date":"YYYY-MM-DD","period":5,"task":"Review notes"}]
+</TASKS>
+Only include TASKS if the student explicitly asked you to add/schedule something.
+
+Task understanding rules:
+- Look for tasks and reminders that look like tests, quizzes, essays, projects, presentations, labs, finals, or major assessments.
+- If the student asks for a study plan, build a realistic day-by-day schedule using the actual dates and class periods from the current week.
+- Suggest timed study blocks like 20–30 minutes for review, 30–45 minutes for practice, and 10–15 minutes for recap.
+- If a test is coming up, mention it clearly and break the prep into manageable daily sessions.
+- Keep replies concise, warm, and actionable. Reference actual dates and Day letters when possible.
+
+Examples:
+- "I see a Biology quiz on Thursday. Here is a 3-day plan: Wednesday 20 min vocab review, Thursday 15 min quick recap before class."
+- "You have a history essay due Friday. I’d recommend 30 minutes on Tuesday, 45 minutes on Wednesday, and a final 20-minute outline review on Thursday."
+
+Be concise, warm, and actionable. Reference actual dates and Day letters.`;
+
+  const contents=data.chat.slice(-14).map(m=>({role:m.role==='user'?'user':'model',parts:[{text:m.text}]}));
+
+  const res=await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${encodeURIComponent(cfg.geminiKey)}`,
+    {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      system_instruction:{parts:[{text:sys}]},
+      contents,
+      generationConfig:{temperature:0.8,maxOutputTokens:800}
+    })}
+  );
+  if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e?.error?.message||`HTTP ${res.status}`);}
+  const d=await res.json();
+  let reply=d?.candidates?.[0]?.content?.parts?.[0]?.text||'(no response)';
+
+  // Parse and apply any task instructions
+  const taskMatch=reply.match(/<TASKS>([\s\S]*?)<\/TASKS>/);
+  if(taskMatch){
+    try{
+      const tasks=JSON.parse(taskMatch[1].trim());
+      let added=0;
+      tasks.forEach(t=>{
+        if(t.date&&t.period&&t.task){
+          aiAddTask(t.date, t.period, t.task);
+          added++;
+        }
+      });
+      if(added>0) toast(`✓ Added ${added} task${added>1?'s':''} to your planner`);
+    }catch(e){}
+    // Remove the TASKS block from the displayed reply
+    reply=reply.replace(/<TASKS>[\s\S]*?<\/TASKS>/,'').trim();
+  }
+
+  return reply;
+}
+
+function buildWeekCtx(){
+  const lines=[];
+  for(let i=0;i<7;i++){
+    const date=addDays(wkStart,i), ds=toDS(date), letter=getDayLetter(date);
+    const dow=DAYS[date.getDay()];
+    if(isDayOff(date)){lines.push(`${dow} ${ds}: Day off`);continue}
+    if(!letter){lines.push(`${dow} ${ds}: No school`);continue}
+    lines.push(`${dow} ${ds}: Day ${letter} — periods ${getSlotsForLetter(letter).map(p=>`P${p}`).join(',')}`);
+    getSlotsForLetter(letter).forEach(pNum=>{
+      const key=`${ds}_P${pNum}`;
+      const pDef=cfg.periods.find(p=>p.num===pNum);
+      if(!pDef)return;
+      const pending=(data.tasks[key]||[]).filter(t=>!t.done);
+      if(pending.length){
+        lines.push(`  P${pNum} ${pDef.name} — ${pending.map(t=>t.text).join('; ')}`);
+        const assessmentWords = /(test|quiz|exam|essay|project|presentation|final|midterm|lab)/i;
+        const assessmentNotes = pending.filter(t => assessmentWords.test(t.text));
+        if(assessmentNotes.length){
+          lines.push(`  Upcoming assessment note(s): ${assessmentNotes.map(t=>t.text).join('; ')}`);
+        }
+      }
+    });
+    const after=data.freeTasks[`${ds}-after`]||[];
+    if(after.length) lines.push(`  After school: ${after.map(t=>`${t.time?t.time+' ':''} ${t.text}`).join('; ')}`);
+  }
+  return lines.join('\n');
+}
+
+function appendAI(text){
+  const el=document.getElementById('cms');
+  const d=document.createElement('div'); d.className='msg ai';
+  d.innerHTML=`<div class="mav">AI</div><div class="mb">${fmtMd(text)}</div>`;
+  el.appendChild(d); el.scrollTop=el.scrollHeight;
+}
+function appendUser(text){
+  const el=document.getElementById('cms');
+  const d=document.createElement('div'); d.className='msg u';
+  d.innerHTML=`<div class="mav">You</div><div class="mb">${esc(text)}</div>`;
+  el.appendChild(d); el.scrollTop=el.scrollHeight;
+}
+function showTyping(){
+  const el=document.getElementById('cms');
+  const id='ty'+Date.now(), d=document.createElement('div');
+  d.className='msg ai'; d.id=id;
+  d.innerHTML=`<div class="mav">AI</div><div class="mb"><div class="tyd"><div></div><div></div><div></div></div></div>`;
+  el.appendChild(d); el.scrollTop=el.scrollHeight; return id;
+}
+function removeTyping(id){document.getElementById(id)?.remove()}
+function fmtMd(t){
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\*(.*?)\*/g,'<em>$1</em>')
+    .replace(/`(.*?)`/g,'<code style="background:rgba(0,0,0,.08);padding:1px 4px;border-radius:3px">$1</code>')
+    .replace(/\n/g,'<br>');
+}
+
+// ─── AUTOMATIONS ─────────────────────────────────────────
+
+let autoType = 'class';
+
+function setAutoType(t){
+  autoType = t;
+  ['class','weekday','letter','date','keyword'].forEach(x=>{
+    const typeBtn = document.getElementById(`auto-type-${x}`);
+    const pickEl = document.getElementById(`auto-${x}-pick`);
+    if(typeBtn) typeBtn.classList.toggle('active', x===t);
+    if(pickEl) pickEl.style.display = x===t ? 'block' : 'none';
+  });
+  // "same class slot" option only makes sense for class trigger
+  const sameOpt = document.querySelector('#auto-where option[value="same"]');
+  if(sameOpt) sameOpt.disabled = (t !== 'class');
+  if(t !== 'class' && document.getElementById('auto-where').value === 'same'){
+    document.getElementById('auto-where').value = 'after';
+  }
+}
+
+function openAutoModal(){
+  const sel = document.getElementById('auto-period-sel');
+  sel.innerHTML = cfg.periods.map(p=>`<option value="${p.num}">P${p.num}: ${esc(p.name)}</option>`).join('');
+  if(!sel.innerHTML) sel.innerHTML = '<option value="">No periods set</option>';
+  renderAutoList();
+  openMod('automod');
+}
+
+function addAutomation(){
+  const text = document.getElementById('auto-text').value.trim();
+  if(!text){ toast('Enter event text'); return; }
+  const time  = document.getElementById('auto-time').value || '';
+  const where = document.getElementById('auto-where').value || 'same';
+
+  let match;
+  if(autoType === 'class'){
+    match = parseInt(document.getElementById('auto-period-sel').value, 10);
+    if(!match){ toast('Pick a class'); return; }
+  } else if(autoType === 'weekday'){
+    match = [...document.querySelectorAll('.awd:checked')].map(c=>parseInt(c.value,10));
+    if(!match.length){ toast('Pick at least one weekday'); return; }
+  } else if(autoType === 'letter'){
+    match = [...document.querySelectorAll('.ald:checked')].map(c=>c.value);
+    if(!match.length){ toast('Pick at least one Day letter'); return; }
+  } else if(autoType === 'date'){
+    const dateValue = document.getElementById('auto-date').value;
+    if(!dateValue){ toast('Pick a target date'); return; }
+    match = {
+      date: dateValue,
+      daysBefore: Math.max(0, parseInt(document.getElementById('auto-date-days').value || '0', 10) || 0)
+    };
+  } else if(autoType === 'keyword'){
+    const keyword = document.getElementById('auto-keyword').value.trim();
+    if(!keyword){ toast('Enter a task keyword'); return; }
+    match = keyword;
+  }
+
+  if(!cfg.automations) cfg.automations = [];
+  cfg.automations.push({ id: Date.now(), type: autoType, match, where, text, time, enabled: true });
+
+  // Reset form
+  document.getElementById('auto-text').value = '';
+  document.getElementById('auto-time').value = '';
+  document.getElementById('auto-date').value = '';
+  document.getElementById('auto-date-days').value = '';
+  document.getElementById('auto-keyword').value = '';
+  document.querySelectorAll('.awd,.ald').forEach(c=>c.checked=false);
+
+  save(); renderAutoList(); renderWeek();
+  toast('Automation added ✓');
+}
+
+function toggleAutomation(id){
+  const a=(cfg.automations||[]).find(x=>x.id==id);
+  if(a){ a.enabled=!a.enabled; save(); renderAutoList(); renderWeek(); }
+}
+
+function deleteAutomation(id){
+  cfg.automations=(cfg.automations||[]).filter(x=>x.id!=id);
+  save(); renderAutoList(); renderWeek();
+}
+
+function renderAutoList(){
+  const list=document.getElementById('auto-list');
+  if(!list)return;
+  const autos=cfg.automations||[];
+  if(!autos.length){
+    list.innerHTML='<p style="font-size:12px;color:var(--ts);text-align:center;padding:8px">No automations yet.</p>';
+    return;
+  }
+  list.innerHTML='';
+  const whereLabel={'same':'→ class slot','lunch':'→ Lunch','after':'→ After School'};
+  const wdNames=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  autos.forEach(a=>{
+    let trigger='';
+    if(a.type==='class'){
+      const p=cfg.periods.find(x=>x.num==a.match);
+      trigger=`Every time P${a.match}${p?' ('+p.name+')':''}`;
+    } else if(a.type==='weekday'){
+      trigger=`Every ${a.match.map(d=>wdNames[d]).join(', ')}`;
+    } else if(a.type==='letter'){
+      trigger=`Every Day ${Array.isArray(a.match)?a.match.join(', '):a.match}`;
+    } else if(a.type==='date'){
+      const daysBefore = Number(a.match?.daysBefore || 0);
+      trigger = daysBefore > 0
+        ? `On ${a.match.date} (remind ${daysBefore} day${daysBefore===1?'':'s'} before)`
+        : `On ${a.match.date}`;
+    } else if(a.type==='keyword'){
+      trigger=`When task text contains “${esc(a.match)}”`;
+    }
+    const wl=whereLabel[a.where||'same']||'';
+    const sub=`${trigger} ${wl}${a.time?' @ '+a.time:''}`;
+    const row=document.createElement('div');
+    row.className='auto-row';
+    row.innerHTML=`
+      <div class="auto-row-info">
+        <div class="auto-row-title">${esc(a.text)}</div>
+        <div class="auto-row-sub">${sub}</div>
+      </div>
+      <button class="auto-toggle ${a.enabled?'on':'off'}" onclick="toggleAutomation(${a.id})"></button>
+      <button onclick="deleteAutomation(${a.id})" style="background:none;border:none;cursor:pointer;color:var(--danger);font-size:15px;padding:2px">×</button>
+    `;
+    list.appendChild(row);
+  });
+}
+
+function taskTextMatchesKeyword(date, keyword){
+  const needle=String(keyword||'').trim().toLowerCase();
+  if(!needle) return false;
+  const ds=toDS(dateOnly(date));
+  const taskLists = Object.entries(data.tasks).filter(([key]) => key.startsWith(`${ds}_`));
+  return taskLists.some(([, tasks]) => (tasks||[]).some(t => String(t.text||'').toLowerCase().includes(needle)));
+}
+
+function dateAutomationMatches(date, match){
+  if(!match || !match.date) return false;
+  const target=dateOnly(new Date(match.date+'T12:00:00'));
+  const cur=dateOnly(date);
+  if(toDS(cur)===match.date) return true;
+  const daysBefore=Number(match.daysBefore||0);
+  if(daysBefore <= 0) return false;
+  const diffDays=Math.round((target.getTime()-cur.getTime())/86400000);
+  return diffDays >= 0 && diffDays <= daysBefore;
+}
+
+// Ghost tasks for a class slot — type=class + where=same
+function getAutoTasksForSlot(date, pNum){
+  return (cfg.automations||[])
+    .filter(a=>a.enabled && a.type==='class' && a.match==pNum && (a.where==='same'||!a.where))
+    .map(a=>({id:'auto_'+a.id, text:a.text, time:a.time}));
+}
+
+// Ghost tasks for lunch — type=class+where=lunch | type=weekday/letter+where=lunch
+function getAutoTasksForLunch(date){
+  const dow=date.getDay(), letter=getDayLetter(date);
+  return (cfg.automations||[]).filter(a=>{
+    if(!a.enabled || a.where!=='lunch') return false;
+    if(a.type==='class'){
+      // fires if that class is visible today
+      const vis=letter?getSlotsForLetter(letter):[];
+      return vis.includes(a.match);
+    }
+    if(a.type==='weekday') return a.match.includes(dow);
+    if(a.type==='letter')  return letter && a.match.includes(letter);
+    if(a.type==='date')    return dateAutomationMatches(date, a.match);
+    if(a.type==='keyword') return taskTextMatchesKeyword(date, a.match);
+    return false;
+  }).map(a=>({id:'auto_'+a.id, text:a.text, time:a.time}));
+}
+
+// Ghost tasks for after-school — type=class+where=after | weekday/letter+where=after
+function getAutoTasksForAfter(date){
+  const dow=date.getDay(), letter=getDayLetter(date);
+  return (cfg.automations||[]).filter(a=>{
+    if(!a.enabled) return false;
+    const w=a.where||'same';
+    // weekday/letter automations default to after if no where set
+    if(a.type==='weekday') return w==='after' && a.match.includes(dow);
+    if(a.type==='letter')  return w==='after' && letter && a.match.includes(letter);
+    if(a.type==='class')   return w==='after' && (letter?getSlotsForLetter(letter):[]).includes(a.match);
+    if(a.type==='date')    return w==='after' && dateAutomationMatches(date, a.match);
+    if(a.type==='keyword') return w==='after' && taskTextMatchesKeyword(date, a.match);
+    return false;
+  }).map(a=>({id:'auto_'+a.id, text:a.text, time:a.time}));
+}
+
+// ─── BOOT ────────────────────────────────────────────────
+async function boot(){
+  // Listen for auth state changes (handles token refresh and tab switches)
+  supa.auth.onAuthStateChange(async (event, session) => {
+    if(event === 'SIGNED_IN' && session && !supaUser){
+      supaUser = session.user;
+      updateUserPill();
+    }
+    if(event === 'SIGNED_OUT'){
+      supaUser = null;
+      updateUserPill();
+    }
+  });
+
+  // Check for existing session
+  const { data: { session } } = await supa.auth.getSession();
+  if(session){
+    await onSignedIn(session.user);
+  } else {
+    // No session — show auth screen
+    showScreen('screen-auth');
+  }
+}
+boot();
+</script>
+</body>
+</html>
