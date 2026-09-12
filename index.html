@@ -916,6 +916,7 @@ let data = {
 };
 
 let wkStart = null, chatOpen = false, dayModalDate = null, anchorPick = null;
+let openSlotKeys = new Set();
 
 // ─── STORAGE ─────────────────────────────────────────────
 function save(){
@@ -1215,8 +1216,24 @@ function launch(){
   document.getElementById('set-btn').onclick=openSettings;
 }
 
+function captureOpenSlotKeys(){
+  openSlotKeys = new Set(
+    [...document.querySelectorAll('.slot.open')]
+      .map(el => el.dataset.key || '')
+      .filter(Boolean)
+  );
+}
+
+function restoreOpenSlotKeys(){
+  if(!openSlotKeys.size) return;
+  document.querySelectorAll('.slot[data-key]').forEach(el => {
+    if(openSlotKeys.has(el.dataset.key)) el.classList.add('open');
+  });
+}
+
 // ─── WEEK RENDER ─────────────────────────────────────────
 function renderWeek(){
+  captureOpenSlotKeys();
   const grid=document.getElementById('wg');
   grid.innerHTML='';
   const today=dateOnly(new Date());
@@ -1376,6 +1393,8 @@ function renderWeek(){
     col.appendChild(cont);
     grid.appendChild(col);
   }
+
+  restoreOpenSlotKeys();
 }
 
 // ─── BUILD SLOT ───────────────────────────────────────────
@@ -1519,7 +1538,7 @@ function buildWeekendSlot(ds, pDef){
 // ─── FREE / AFTER CARDS ───────────────────────────────────
 function freeCard(ds, label){
   const el=document.createElement('div');
-  el.className='slot'; el.style.border='1px dashed var(--border)';
+  el.className='slot'; el.dataset.key=`${ds}-free`; el.style.border='1px dashed var(--border)';
   el.innerHTML=`
     <div class="slot-hd" onclick="this.parentElement.classList.toggle('open')">
       <div class="sn" style="color:var(--ts)">${label}</div><div class="sv">▼</div>
