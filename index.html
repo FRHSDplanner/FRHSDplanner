@@ -95,6 +95,9 @@
     .wnb:hover{background:var(--surface2)}
     .tdb{padding:5px 10px;border-radius:20px;border:1px solid var(--border);background:none;cursor:pointer;font-size:12px;font-family:var(--f);color:var(--ts);transition:all .2s;white-space:nowrap}
     .tdb:hover{background:var(--pl);color:var(--primary);border-color:var(--primary)}
+    .save-btn{padding:6px 12px;border-radius:999px;border:none;background:var(--primary);color:#fff;cursor:pointer;font-size:12px;font-weight:700;font-family:var(--f);transition:background .2s, transform .15s;box-shadow:0 1px 3px rgba(26,115,232,.2);flex-shrink:0}
+    .save-btn:hover{background:var(--pd)}
+    .save-btn:active{transform:translateY(1px)}
     .icb{width:28px;height:28px;border-radius:50%;border:none;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--ts);transition:background .2s;flex-shrink:0}
     .icb:hover{background:var(--surface2)}
 
@@ -431,7 +434,7 @@
       <button class="tdb" id="today-btn">Today</button>
       <button class="wnb" id="next-btn">›</button>
       <button class="icb" id="auto-btn" title="Automations" onclick="openAutoModal()">🔁</button>
-      <button class="icb" id="save-btn" title="Save changes" onclick="saveCurrentState()">Save</button>
+      <button class="save-btn" id="save-btn" title="Save changes" onclick="saveCurrentState()">Save</button>
       <button class="icb" id="set-btn" title="Settings" onclick="openSettings()">⚙️</button>
       <div id="user-pill" class="auth-user-pill" style="display:none;cursor:pointer" onclick="openSettings()" title="Signed in — click for settings">
         <span class="sync-dot" id="sync-dot"></span>
