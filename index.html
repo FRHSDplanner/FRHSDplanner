@@ -431,6 +431,7 @@
       <button class="tdb" id="today-btn">Today</button>
       <button class="wnb" id="next-btn">›</button>
       <button class="icb" id="auto-btn" title="Automations" onclick="openAutoModal()">🔁</button>
+      <button class="icb" id="save-btn" title="Save changes" onclick="saveCurrentState()">Save</button>
       <button class="icb" id="set-btn" title="Settings" onclick="openSettings()">⚙️</button>
       <div id="user-pill" class="auth-user-pill" style="display:none;cursor:pointer" onclick="openSettings()" title="Signed in — click for settings">
         <span class="sync-dot" id="sync-dot"></span>
@@ -903,6 +904,11 @@ function toast(msg){
   el.classList.add('show');
   clearTimeout(toast.timer);
   toast.timer = setTimeout(()=>el.classList.remove('show'), 1800);
+}
+
+function saveCurrentState(){
+  save();
+  toast('Saved ✓');
 }
 
 // ── Screen helper ──────────────────────────────────────
