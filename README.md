@@ -9,26 +9,21 @@ An AI-powered weekly school planner for FRHSD students. Single-file, runs entire
 - **Weekly view** — Google Tasks-style Sun–Sat columns. Navigate any week past or future with the arrow buttons.
 - **Per-class task lists** — tap a class card to expand it, then add/check off/delete homework tasks.
 - **Weekend reminder cards** — free-day cards on Saturday and Sunday for general reminders.
-- **Gemini AI Chat** — collapsible panel at the bottom. The AI sees your full week schedule and all pending tasks so it can help you plan, prioritize, and study smarter.
 - **Day number override** — click any **Day X** badge in the week header to manually set that day's block number. The rest of the week recalculates from your choice. A ✎ shows when overridden; tap "Auto" to revert.
 - **SVG logo** — book icon with a rotating day badge.
 - **No sign-in required** — just open the URL and go.
 
 ---
 
-## Setup (2 steps)
+## Setup
 
-### 1. Get a Gemini API Key (free)
-
-Go to [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey) and create a key. It's free with a generous daily limit.
-
-### 2. Deploy to GitHub Pages
+### 1. Deploy to GitHub Pages
 
 1. Fork or push this repo to your GitHub account
 2. Go to **Settings → Pages**
 3. Set Source: **main** branch, **/ (root)**
 4. Visit `https://yourusername.github.io/frhsd-planner/`
-5. Enter your Gemini key and subjects on first launch — done!
+5. Set your school type and enter your periods on first launch — done!
 
 ---
 
@@ -78,6 +73,6 @@ Bell schedule (Late schools — Colts Neck, Freehold Township, Marlboro):
 ```
 frhsd-planner/
 ├── index.html      # The entire app — HTML + CSS + JS, single file, no dependencies
-├── .env.example    # Reference only — the Gemini key is entered in-app
+├── .env.example    # Reference only — Supabase keys are stored in the app configuration
 └── README.md
 ```

@@ -357,18 +357,8 @@
   <p style="font-size:13px;color:var(--ts);margin-bottom:22px">Let's get you set up</p>
 
   <!-- Step 1 -->
-  <div id="s1">
-    <p class="step-label">Step 1 of 3</p>
-    <h2 class="step-h">Gemini API Key</h2>
-    <p class="step-p">Saved on this device only. Used to power the AI assistant.</p>
-    <div class="fg"><label>API Key</label><input type="password" id="key-input" placeholder="AIza…" autocomplete="off"/></div>
-    <button class="btn bp bfull" onclick="s1next()">Continue →</button>
-    <p style="font-size:12px;color:var(--ts);margin-top:9px"><a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--primary)">Get a free key at Google AI Studio ↗</a></p>
-  </div>
-
-  <!-- Step 2 -->
-  <div id="s2" style="display:none">
-    <p class="step-label">Step 2 of 3</p>
+  <div id="s2">
+    <p class="step-label">Step 1 of 2</p>
     <h2 class="step-h">School & Today's Day Letter</h2>
     <p class="step-p">FRHSD uses letter days A–G. Pick which letter day today is so the schedule is right from day one.</p>
     <div class="fg"><label>School type</label>
@@ -393,9 +383,9 @@
     <button class="btn bp bfull" onclick="s2next()">Continue →</button>
   </div>
 
-  <!-- Step 3 -->
+  <!-- Step 2 -->
   <div id="s3" style="display:none">
-    <p class="step-label">Step 3 of 3</p>
+    <p class="step-label">Step 2 of 2</p>
     <h2 class="step-h">Your 7 Periods</h2>
     <p class="step-p">Enter what class you have each period. Leave blank for a free/study period. Check "Double lab" if a course spans two consecutive periods (e.g. P3+P4) — then pick which letter days it runs as a double.</p>
     <div class="plist" id="plist"></div>
@@ -405,7 +395,6 @@
   <div class="dots">
     <div class="dot active" id="d1"></div>
     <div class="dot" id="d2"></div>
-    <div class="dot" id="d3"></div>
   </div>
 </div>
 </div>
@@ -444,17 +433,6 @@
   </header>
   <div class="app-body">
     <div class="wgw"><div class="wg" id="wg"></div></div>
-    <div class="cp col" id="cp">
-      <div class="ct" id="ct">
-        <div class="ctl"><div class="aidot"></div>✨ AI Study Assistant</div>
-        <span id="cchev">▲</span>
-      </div>
-      <div class="cms" id="cms"></div>
-      <div class="cia">
-        <input type="text" class="ci" id="ci" placeholder="Ask me to add tasks, plan your week, explain a topic…"/>
-        <button class="cs" id="cs">➤</button>
-      </div>
-    </div>
   </div>
 </div>
 
@@ -463,7 +441,6 @@
   <div class="md">
     <h2>⚙️ Settings</h2>
     <p class="mds">Saved to this device only</p>
-    <div class="fg"><label>Gemini API Key</label><input type="password" id="sk" placeholder="AIza…"/></div>
     <div class="fg"><label>School type</label>
       <div class="stt" id="ss-school">
         <button class="st" data-t="early">Early 🕖</button>
@@ -848,7 +825,7 @@ async function loadFromCloud(){
     return {
       cfg: remoteCfg,
       data: remoteData,
-      hasRemoteState: !!(rows.cfg && rows.cfg.geminiKey && rows.cfg.periods && rows.cfg.periods.length > 0) || !!rows.data,
+      hasRemoteState: !!(rows.cfg && rows.cfg.periods && rows.cfg.periods.length > 0) || !!rows.data,
     };
   } catch(err){
     console.warn('Cloud load failed:', err.message);
@@ -993,7 +970,6 @@ const WE    = new Set([0,6]);
 
 // Anchor: Sep 9 2025 = Day A (index 0)
 const ANCHOR = new Date(2025, 8, 9);
-const MODEL  = 'gemini-3.8-flash';
 const LS_KEY = 'frhsd_v5';
 
 function getStorageKey(){
@@ -1001,7 +977,7 @@ function getStorageKey(){
 }
 
 // ─── STATE ───────────────────────────────────────────────
-let cfg = { geminiKey:'', school:'early', periods:[], automations:[] };
+let cfg = { school:'early', periods:[], automations:[] };
 // automations: [{id, type:'class'|'weekday'|'letter', match:periodNum|[weekdayNums]|[letters], text, time, enabled}]
 
 let data = {
@@ -1183,15 +1159,6 @@ function setDayState(ds, makeOff){
 }
 
 
-function s1next(){
-  const v=document.getElementById('key-input').value.trim();
-  if(!v){alert('Please enter your Gemini API key.');return}
-  cfg.geminiKey=v;
-  document.getElementById('s1').style.display='none';
-  document.getElementById('s2').style.display='block';
-  document.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active',i<2));
-}
-
 function s2next(){
   const t=document.querySelector('#s2-school .st.active');
   cfg.school=t?t.dataset.t:'early';
@@ -1223,7 +1190,6 @@ function setDot(n){
 function show(id,val){document.getElementById(id).style.display=val}
 
 function initOnboarding(){
-  document.getElementById('key-input').addEventListener('keydown',e=>{if(e.key==='Enter')s1next()});
   document.querySelectorAll('#s2-school .st').forEach(t=>t.addEventListener('click',()=>{
     document.querySelectorAll('#s2-school .st').forEach(x=>x.classList.remove('active'));
     t.classList.add('active');
@@ -1306,7 +1272,6 @@ function launch(){
   updateUserPill();
   wkStart=getWkStart(new Date());
   renderWeek();
-  initChat();
   initSettings();
   document.getElementById('prev-btn').onclick=()=>{wkStart=addDays(wkStart,-7);renderWeek()};
   document.getElementById('next-btn').onclick=()=>{wkStart=addDays(wkStart,7);renderWeek()};
@@ -1861,7 +1826,6 @@ function initSettings(){
   document.querySelectorAll('.mo').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)closeMod(o.id)}));
 }
 function openSettings(){
-  document.getElementById('sk').value=cfg.geminiKey;
   document.querySelectorAll('#ss-school .st').forEach(t=>t.classList.toggle('active',t.dataset.t===cfg.school));
   buildPForm('splist');
   const sob = document.getElementById('signout-btn');
@@ -1869,7 +1833,6 @@ function openSettings(){
   openMod('setmod');
 }
 function saveSets(){
-  const k=document.getElementById('sk').value.trim(); if(k)cfg.geminiKey=k;
   const t=document.querySelector('#ss-school .st.active'); if(t)cfg.school=t.dataset.t;
   collectP('splist'); save(); closeMod('setmod'); renderWeek(); toast('Settings saved ✓');
 }
@@ -1888,186 +1851,6 @@ function clearAll(){
 // ─── MODAL ───────────────────────────────────────────────
 function openMod(id){document.getElementById(id).classList.add('open')}
 function closeMod(id){document.getElementById(id).classList.remove('open')}
-
-// ─── AI CHAT ─────────────────────────────────────────────
-function initChat(){
-  const panel=document.getElementById('cp');
-  document.getElementById('ct').onclick=()=>{
-    chatOpen=!chatOpen;
-    panel.className=`cp ${chatOpen?'exp':'col'}`;
-    document.getElementById('cchev').textContent=chatOpen?'▼':'▲';
-    if(chatOpen&&!document.getElementById('cms').children.length) appendAI(greeting());
-  };
-  document.getElementById('cs').onclick=sendChat;
-  document.getElementById('ci').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat()}});
-}
-
-function greeting(){
-  const h=new Date().getHours();
-  const g=h<12?'Good morning':h<17?'Good afternoon':'Good evening';
-  const letter=getDayLetter(new Date());
-  const info=letter?`Today is **Day ${letter}**. Periods today: ${getSlotsForLetter(letter).map(p=>`P${p}`).join(', ')}.`:'Today is a weekend or no-school day.';
-  const courses=cfg.periods.map(p=>`P${p.num}: ${p.name}${p.isLab ? ` (double lab on days ${p.labDays.join(',')})` : ''}`).join(', ');
-  return `${g}! 👋 I'm your FRHSD study assistant.\n\n${info}\nYour courses: **${courses||'(none set)'}**\nWeek: **${fmtWk(wkStart)}**\n\nI can help plan your week, spot upcoming tests, and build a timed study schedule. I can also **add tasks directly to your schedule** — just ask! E.g. "Add algebra test to Wednesday" or "Plan my study sessions for this week".`;
-}
-
-async function sendChat(){
-  const inp=document.getElementById('ci'), sbtn=document.getElementById('cs');
-  const txt=inp.value.trim(); if(!txt)return;
-  inp.value=''; sbtn.disabled=true;
-  appendUser(txt); data.chat.push({role:'user',text:txt});
-  const tid=showTyping();
-  try{
-    const reply=await callGemini(txt);
-    removeTyping(tid); appendAI(reply);
-    data.chat.push({role:'model',text:reply});
-    if(data.chat.length>40)data.chat=data.chat.slice(-40);
-    save();
-  }catch(err){
-    removeTyping(tid);
-    appendAI(`⚠️ ${err.message}`);
-  }
-  sbtn.disabled=false; inp.focus();
-}
-
-async function callGemini(msg){
-  if(!cfg.geminiKey) throw new Error('No API key — open Settings ⚙️');
-
-  // Build current week context string
-  const wkCtx=buildWeekCtx();
-  const todayLetter=getDayLetter(new Date());
-  const courseList=cfg.periods.map(p=>`P${p.num}: ${p.name}${p.isLab ? ` (double lab on days: ${p.labDays.join(',')})` : ''}`).join('\n');
-
-  const sys=`You are a helpful AI study assistant for an FRHSD student.
-
-FRHSD uses a 7-day LETTER rotating schedule (Days A–G).
-Each day has 5 class periods: 3 morning, then LUNCH, then 2 afternoon.
-Schedule:
-Day A: P1,P2,P3 | lunch | P5,P6
-Day B: P4,P1,P2 | lunch | P7,P5
-Day C: P6,P4,P1 | lunch | P3,P7
-Day D: P5,P6,P4 | lunch | P2,P3
-Day E: P7,P5,P6 | lunch | P1,P2
-Day F: P3,P7,P5 | lunch | P4,P1
-Day G: P2,P3,P7 | lunch | P6,P4
-
-Student's courses:
-${courseList||'(none set)'}
-
-School: ${cfg.school==='late'?'Late (8:24 AM)':'Early (7:30 AM)'}
-Today: ${todayLetter?`Day ${todayLetter}`:'Weekend/holiday'}
-Week of ${fmtWk(wkStart)}:
-${wkCtx}
-
-IMPORTANT — You can add tasks to the student's planner by calling the special function in your reply.
-When the student asks you to add a task, include a JSON block at the END of your reply, like this:
-<TASKS>
-[{"date":"YYYY-MM-DD","period":3,"task":"Study chapter 5"},{"date":"YYYY-MM-DD","period":5,"task":"Review notes"}]
-</TASKS>
-Only include TASKS if the student explicitly asked you to add/schedule something.
-
-Task understanding rules:
-- Look for tasks and reminders that look like tests, quizzes, essays, projects, presentations, labs, finals, or major assessments.
-- If the student asks for a study plan, build a realistic day-by-day schedule using the actual dates and class periods from the current week.
-- Suggest timed study blocks like 20–30 minutes for review, 30–45 minutes for practice, and 10–15 minutes for recap.
-- If a test is coming up, mention it clearly and break the prep into manageable daily sessions.
-- Keep replies concise, warm, and actionable. Reference actual dates and Day letters when possible.
-
-Examples:
-- "I see a Biology quiz on Thursday. Here is a 3-day plan: Wednesday 20 min vocab review, Thursday 15 min quick recap before class."
-- "You have a history essay due Friday. I’d recommend 30 minutes on Tuesday, 45 minutes on Wednesday, and a final 20-minute outline review on Thursday."
-
-Be concise, warm, and actionable. Reference actual dates and Day letters.`;
-
-  const contents=data.chat.slice(-14).map(m=>({role:m.role==='user'?'user':'model',parts:[{text:m.text}]}));
-
-  const res=await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${encodeURIComponent(cfg.geminiKey)}`,
-    {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-      system_instruction:{parts:[{text:sys}]},
-      contents,
-      generationConfig:{temperature:0.8,maxOutputTokens:800}
-    })}
-  );
-  if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e?.error?.message||`HTTP ${res.status}`);}
-  const d=await res.json();
-  let reply=d?.candidates?.[0]?.content?.parts?.[0]?.text||'(no response)';
-
-  // Parse and apply any task instructions
-  const taskMatch=reply.match(/<TASKS>([\s\S]*?)<\/TASKS>/);
-  if(taskMatch){
-    try{
-      const tasks=JSON.parse(taskMatch[1].trim());
-      let added=0;
-      tasks.forEach(t=>{
-        if(t.date&&t.period&&t.task){
-          aiAddTask(t.date, t.period, t.task);
-          added++;
-        }
-      });
-      if(added>0) toast(`✓ Added ${added} task${added>1?'s':''} to your planner`);
-    }catch(e){}
-    // Remove the TASKS block from the displayed reply
-    reply=reply.replace(/<TASKS>[\s\S]*?<\/TASKS>/,'').trim();
-  }
-
-  return reply;
-}
-
-function buildWeekCtx(){
-  const lines=[];
-  for(let i=0;i<7;i++){
-    const date=addDays(wkStart,i), ds=toDS(date), letter=getDayLetter(date);
-    const dow=DAYS[date.getDay()];
-    if(isDayOff(date)){lines.push(`${dow} ${ds}: Day off`);continue}
-    if(!letter){lines.push(`${dow} ${ds}: No school`);continue}
-    lines.push(`${dow} ${ds}: Day ${letter} — periods ${getSlotsForLetter(letter).map(p=>`P${p}`).join(',')}`);
-    getSlotsForLetter(letter).forEach(pNum=>{
-      const key=`${ds}_P${pNum}`;
-      const pDef=cfg.periods.find(p=>p.num===pNum);
-      if(!pDef)return;
-      const pending=(data.tasks[key]||[]).filter(t=>!t.done);
-      if(pending.length){
-        lines.push(`  P${pNum} ${pDef.name} — ${pending.map(t=>t.text).join('; ')}`);
-        const assessmentWords = /(test|quiz|exam|essay|project|presentation|final|midterm|lab)/i;
-        const assessmentNotes = pending.filter(t => assessmentWords.test(t.text));
-        if(assessmentNotes.length){
-          lines.push(`  Upcoming assessment note(s): ${assessmentNotes.map(t=>t.text).join('; ')}`);
-        }
-      }
-    });
-    const after=data.freeTasks[`${ds}-after`]||[];
-    if(after.length) lines.push(`  After school: ${after.map(t=>`${t.time?t.time+' ':''} ${t.text}`).join('; ')}`);
-  }
-  return lines.join('\n');
-}
-
-function appendAI(text){
-  const el=document.getElementById('cms');
-  const d=document.createElement('div'); d.className='msg ai';
-  d.innerHTML=`<div class="mav">AI</div><div class="mb">${fmtMd(text)}</div>`;
-  el.appendChild(d); el.scrollTop=el.scrollHeight;
-}
-function appendUser(text){
-  const el=document.getElementById('cms');
-  const d=document.createElement('div'); d.className='msg u';
-  d.innerHTML=`<div class="mav">You</div><div class="mb">${esc(text)}</div>`;
-  el.appendChild(d); el.scrollTop=el.scrollHeight;
-}
-function showTyping(){
-  const el=document.getElementById('cms');
-  const id='ty'+Date.now(), d=document.createElement('div');
-  d.className='msg ai'; d.id=id;
-  d.innerHTML=`<div class="mav">AI</div><div class="mb"><div class="tyd"><div></div><div></div><div></div></div></div>`;
-  el.appendChild(d); el.scrollTop=el.scrollHeight; return id;
-}
-function removeTyping(id){document.getElementById(id)?.remove()}
-function fmtMd(t){
-  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-    .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\*(.*?)\*/g,'<em>$1</em>')
-    .replace(/`(.*?)`/g,'<code style="background:rgba(0,0,0,.08);padding:1px 4px;border-radius:3px">$1</code>')
-    .replace(/\n/g,'<br>');
-}
 
 // ─── AUTOMATIONS ─────────────────────────────────────────
 
