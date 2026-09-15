@@ -69,8 +69,13 @@
     .ld-pill{padding:2px 8px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface2);cursor:pointer;font-size:10px;font-weight:700;color:var(--ts);transition:all .15s;user-select:none}
     .ld-pill.on{border-color:var(--primary);background:var(--primary);color:#fff}
     /* color swatch button */
-    .color-swatch{width:18px;height:18px;border-radius:50%;border:2px solid rgba(0,0,0,.15);cursor:pointer;flex-shrink:0;padding:0;outline:none;position:relative;overflow:hidden}
-    .color-swatch input[type=color]{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;padding:0;border:none}
+    .color-swatch{width:22px;height:22px;border-radius:50%;border:2px solid rgba(0,0,0,.18);cursor:pointer;flex-shrink:0;padding:0;outline:none;transition:transform .15s,box-shadow .15s}
+    .color-swatch:hover{transform:scale(1.08);box-shadow:0 0 0 3px var(--pl)}
+    .color-picker-wrap{position:relative;display:flex;flex-shrink:0}
+    .color-palette{position:absolute;top:28px;left:0;z-index:30;display:grid;grid-template-columns:repeat(4,22px);gap:6px;padding:8px;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:var(--shm)}
+    .palette-color{width:22px;height:22px;border-radius:50%;border:2px solid rgba(0,0,0,.15);cursor:pointer;padding:0;transition:transform .15s,opacity .15s}
+    .palette-color:hover:not(:disabled){transform:scale(1.12)}
+    .palette-color:disabled{cursor:not-allowed;opacity:.25}
     .dots{display:flex;gap:6px;justify-content:center;margin-top:16px}
     .dot{width:8px;height:8px;border-radius:50%;background:var(--border);transition:background .2s}
     .dot.active{background:var(--primary)}
@@ -100,6 +105,11 @@
     .save-btn:active{transform:translateY(1px)}
     .icb{width:28px;height:28px;border-radius:50%;border:none;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--ts);transition:background .2s;flex-shrink:0}
     .icb:hover{background:var(--surface2)}
+    .tool-group{display:flex;align-items:center;gap:2px;padding:2px;border:1px solid var(--border);border-radius:9px;background:var(--surface2)}
+    .tool-group .icb{width:27px;height:27px;font-size:15px}
+    .auto-silhouette{display:flex;align-items:center;justify-content:center;color:var(--ts)}
+    .auto-silhouette svg{width:17px;height:17px;display:block}
+    .calendar-btn{font-size:14px}
 
     /* ── Week grid ── */
     .app-body{display:flex;flex:1;overflow:hidden;flex-direction:column}
@@ -151,20 +161,24 @@
     .slot.open .slot-bd{display:block}
     .sm{font-size:10px;color:var(--ts);margin-bottom:5px;word-break:break-word}
 
-    /* dropped period */
-    .dropped{background:#fafafa;border:1px dashed #ddd;border-radius:var(--r);padding:4px 7px;display:flex;align-items:center;gap:5px;opacity:.6}
-    .dropped-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-    .dropped-name{font-size:10px;color:var(--ts);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-style:italic}
-    .dropped-tag{font-size:9px;padding:1px 5px;border-radius:7px;color:var(--ts);background:#e8eaed;flex-shrink:0;white-space:nowrap}
+    /* Off period */
+    .Off{background:#fafafa;border:1px dashed #ddd;border-radius:var(--r);padding:4px 7px;display:flex;align-items:center;gap:5px;opacity:.6}
+    .Off-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+    .Off-name{font-size:10px;color:var(--ts);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-style:italic}
+    .Off-tag{font-size:9px;padding:1px 5px;border-radius:7px;color:var(--ts);background:#e8eaed;flex-shrink:0;white-space:nowrap}
 
     /* lunch */
     .lunch{background:linear-gradient(135deg,#e6f4ea,#f8f9fa);border:1px solid #c8e6c9;border-radius:var(--r);padding:5px 8px;text-align:center}
     .lunch-label{font-size:10px;font-weight:700;color:var(--ok)}
     .lunch-time{font-size:9px;color:var(--ts);margin-top:1px}
 
-    /* after school */
+    /* Extra Tasks */
     .after{background:linear-gradient(135deg,#e8f0fe,#f8f9fa);border:1px solid #c5d9fb;border-radius:var(--r);padding:5px 7px}
     .after-label{font-size:10px;font-weight:700;color:var(--primary);margin-bottom:4px;text-align:center}
+    .after.collapsed .after-content{display:none}
+    .after.collapsed .after-chevron{transform:rotate(-90deg)}
+    .after-head{display:flex;align-items:center;justify-content:center;gap:5px;cursor:pointer;user-select:none}
+    .after-chevron{font-size:10px;color:var(--primary);transition:transform .15s}
 
     /* tasks */
     .tklist{list-style:none;margin-bottom:5px}
@@ -185,7 +199,7 @@
     .ab{flex-shrink:0;padding:5px 10px;border-radius:5px;border:none;background:var(--primary);color:#fff;cursor:pointer;font-size:11px;font-family:var(--f);font-weight:700;transition:background .15s;white-space:nowrap;line-height:1}
     .ab:hover{background:var(--pd)}
 
-    /* after school timing row */
+    /* Extra Tasks timing row */
     .after-input-row{display:flex;gap:4px;margin-bottom:4px;align-items:center}
     /* hidden native time input — zero size, invisible, used only to open OS picker */
     .after-time-native{position:absolute;opacity:0;pointer-events:none;width:0;height:0;border:none;padding:0}
@@ -233,6 +247,29 @@
     .md h2{font-size:17px;font-weight:700;margin-bottom:3px}
     .mds{font-size:12px;color:var(--ts);margin-bottom:16px}
     .mda{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}
+    .settings-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;align-items:center;border-top:1px solid var(--border);padding-top:14px;flex-wrap:nowrap}
+    .settings-actions .action-left,.settings-actions .action-right{display:contents}
+    .settings-actions .btn{min-width:0;padding-left:6px;padding-right:6px;white-space:nowrap}
+    #setmod .md{max-width:620px}
+    .calendar-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+    .calendar-head .icb{border:1px solid var(--border);background:var(--surface2)}
+    .calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+    .calendar-weekday{text-align:center;font-size:10px;font-weight:700;color:var(--ts);padding-bottom:4px}
+    .calendar-day{min-height:36px;border:1px solid var(--border);border-radius:6px;background:var(--surface);cursor:pointer;font:600 12px var(--f);color:var(--text)}
+    .calendar-day:hover,.calendar-day.selected{border-color:var(--primary);background:var(--pl);color:var(--primary)}
+    .calendar-day.muted{color:#adb0b5;background:var(--surface2)}
+    .calendar-day.today{box-shadow:inset 0 -3px 0 var(--primary)}
+    .timer-panel{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:16px;text-align:center}
+    .timer-display{font-size:42px;font-weight:700;letter-spacing:1px;color:var(--primary);margin:8px 0 14px}
+    .timer-task{font-size:12px;color:var(--ts);min-height:18px}
+    .timer-actions{display:flex;gap:8px;justify-content:center}
+    .timer-actions .btn{min-width:82px}
+    .move-list{display:flex;flex-direction:column;gap:6px;max-height:260px;overflow:auto}
+    .move-option{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 10px;border:1px solid var(--border);border-radius:7px;background:var(--surface);cursor:pointer;text-align:left;font:600 12px var(--f);color:var(--text)}
+    .move-option:hover{border-color:var(--primary);background:var(--pl)}
+    .task-tools{display:flex;align-items:center;gap:2px;flex-shrink:0}
+    .task-tool{border:0;background:none;color:var(--ts);cursor:pointer;padding:0 2px;font-size:11px;opacity:0}
+    .tki:hover .task-tool{opacity:1}
 
     /* automation ghost tasks */
     .tki.auto-item{opacity:.75;background:linear-gradient(90deg,#e8f0fe33,transparent)}
@@ -264,6 +301,7 @@
       .md{padding:20px 16px}
       .mda{justify-content:stretch}
       .mda .btn{flex:1;justify-content:center}
+      .settings-actions{gap:4px}.settings-actions .btn{font-size:11px;padding-left:3px;padding-right:3px}
     }
     @media(max-width:400px){
       .ocard{padding:20px 12px}
@@ -422,7 +460,10 @@
       <button class="wnb" id="prev-btn">‹</button>
       <button class="tdb" id="today-btn">Today</button>
       <button class="wnb" id="next-btn">›</button>
-      <button class="icb" id="auto-btn" title="Automations" onclick="openAutoModal()">🔁</button>
+      <button class="icb calendar-btn" title="Open calendar" onclick="openCalendar()">▦</button>
+      <button class="icb" title="Focus timer" onclick="openTimer()">◷</button>
+      <button class="icb auto-silhouette" id="auto-btn" title="Automations" onclick="openAutoModal()"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="7" r="4"/><path d="M4.5 21c.4-4.1 3.2-6.5 7.5-6.5s7.1 2.4 7.5 6.5H4.5z"/></svg></button>
+      <div class="tool-group" aria-label="History controls"><button class="icb" title="Undo" onclick="undoAction()">↶</button><button class="icb" title="Redo" onclick="redoAction()">↷</button></div>
       <button class="save-btn" id="save-btn" title="Save changes" onclick="saveCurrentState()">Save</button>
       <button class="icb" id="set-btn" title="Settings" onclick="openSettings()">⚙️</button>
       <div id="user-pill" class="auth-user-pill" style="display:none;cursor:pointer" onclick="openSettings()" title="Signed in — click for settings">
@@ -450,11 +491,9 @@
     <div class="fg"><label>Periods (P1–P7)</label>
       <div class="plist" id="splist"></div>
     </div>
-    <div class="mda">
-      <button class="btn bd" onclick="clearAll()">Clear All Data</button>
-      <button class="btn bd" id="signout-btn" style="display:none" onclick="signOut()">Sign Out</button>
-      <button class="btn bs" onclick="closeMod('setmod')">Cancel</button>
-      <button class="btn bp" onclick="saveSets()">Save</button>
+    <div class="mda settings-actions">
+      <div class="action-left"><button class="btn bd" onclick="clearAll()">Clear All Data</button><button class="btn bd" id="signout-btn" style="display:none" onclick="signOut()">Sign Out</button></div>
+      <div class="action-right"><button class="btn bs" onclick="closeMod('setmod')">Cancel</button><button class="btn bp" onclick="saveSets()">Save</button></div>
     </div>
   </div>
 </div>
@@ -542,7 +581,7 @@
         <select id="auto-where" style="padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--r);font-size:13px;font-family:var(--f);outline:none;width:100%">
           <option value="same">Same class slot (only for "class meets" trigger)</option>
           <option value="lunch">🍽️ Lunch</option>
-          <option value="after">🏃 After School</option>
+          <option value="after">🏃 Extra Tasks</option>
         </select>
       </div>
 
@@ -582,6 +621,33 @@
       <button class="dpb" data-v="G" onclick="applyDayOv(this)">G</button>
     </div>
     <div class="mda" style="justify-content:center"><button class="btn bs" onclick="closeMod('daymod')">Close</button></div>
+  </div>
+</div>
+
+<!-- CALENDAR MODAL -->
+<div class="mo" id="calmod">
+  <div class="md" style="max-width:380px">
+    <div class="calendar-head"><button class="icb" onclick="shiftCalendar(-1)" title="Previous month">‹</button><h2 id="cal-title">Calendar</h2><button class="icb" onclick="shiftCalendar(1)" title="Next month">›</button></div>
+    <div class="calendar-grid" id="calendar-grid"></div>
+    <div class="mda"><button class="btn bs" onclick="closeMod('calmod')">Close</button></div>
+  </div>
+</div>
+
+<!-- MOVE TASK MODAL -->
+<div class="mo" id="movemod">
+  <div class="md" style="max-width:380px">
+    <h2>Move task</h2><p class="mds" id="move-label">Choose a destination list.</p>
+    <div class="move-list" id="move-list"></div>
+    <div class="mda"><button class="btn bs" onclick="closeMod('movemod')">Cancel</button></div>
+  </div>
+</div>
+
+<!-- TIMER MODAL -->
+<div class="mo" id="timermod">
+  <div class="md" style="max-width:340px">
+    <h2>Focus timer</h2><p class="mds">A simple timer for the task you are working on.</p>
+    <div class="timer-panel"><div class="timer-task" id="timer-task">No task selected</div><div class="timer-display" id="timer-display">25:00</div><div class="timer-actions"><button class="btn bp" id="timer-toggle" onclick="toggleTimer()">Start</button><button class="btn bs" onclick="resetTimer()">Reset</button></div></div>
+    <div class="mda"><button class="btn bs" onclick="closeMod('timermod')">Close</button></div>
   </div>
 </div>
 
@@ -901,8 +967,8 @@ function showScreen(id){
 //  FRHSD ROTATING DROP SCHEDULE  (verified from Sced.png)
 //
 //  TWO INDEPENDENT CYCLES:
-//    Morning (Blocks 1-3): periods P1–P4 rotate, one dropped each day
-//    Afternoon (Blocks 4-5): periods P5–P7 rotate, one dropped each day
+//    Morning (Blocks 1-3): periods P1–P4 rotate, one Off each day
+//    Afternoon (Blocks 4-5): periods P5–P7 rotate, one Off each day
 //
 //  DAY_MORNING[letter] = [B1, B2, B3]   (3 of P1–P4)
 //  DAY_AFTERNOON[letter] = [B4, B5]     (2 of P5–P7)
@@ -939,7 +1005,7 @@ const DAY_AFTERNOON = {
   G: [5,6],
 };
 
-// Combined for backwards compatibility with getDropped and AI context
+// Combined for backwards compatibility with getOff and AI context
 const DAY_SLOTS = {
   A: [...DAY_MORNING.A, ...DAY_AFTERNOON.A],
   B: [...DAY_MORNING.B, ...DAY_AFTERNOON.B],
@@ -962,7 +1028,7 @@ const BELL_L = [null,
 const LUNCH_E = {s:'11:06 AM',e:'11:41 AM'};
 const LUNCH_L = {s:'12:00 PM',e:'12:35 PM'};
 
-const PCOLS = ['#4285f4','#ea4335','#fbbc04','#34a853','#9334e6','#fa7b17','#24c1e0'];
+const PCOLS = ['#4285f4','#ea4335','#fbbc04','#34a853','#9334e6','#fa7b17','#24c1e0','#e91e63','#00897b','#5e35b1','#7cb342','#6d4c41'];
 const PAL   = ['#4285f4','#ea4335','#fbbc04','#34a853','#9334e6','#fa7b17','#24c1e0','#e52592','#00796b'];
 const DAYS  = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 const SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -991,6 +1057,30 @@ let data = {
 
 let wkStart = null, chatOpen = false, dayModalDate = null, anchorPick = null;
 let openSlotKeys = new Set();
+let collapsedAfterKeys = new Set();
+let historyPast = [], historyFuture = [], moveState = null;
+let calendarMonth = dateOnly(new Date());
+let timerSeconds = 25 * 60, timerHandle = null, timerTask = '';
+
+function taskSnapshot(){ return JSON.stringify({tasks:data.tasks,freeTasks:data.freeTasks}); }
+function recordHistory(){
+  historyPast.push(taskSnapshot());
+  if(historyPast.length > 40) historyPast.shift();
+  historyFuture=[];
+}
+function restoreTaskSnapshot(snapshot){
+  const parsed=JSON.parse(snapshot);
+  data.tasks=parsed.tasks||{}; data.freeTasks=parsed.freeTasks||{};
+  save(); renderWeek();
+}
+function undoAction(){
+  if(!historyPast.length){toast('Nothing to undo');return;}
+  historyFuture.push(taskSnapshot()); restoreTaskSnapshot(historyPast.pop()); toast('Undone');
+}
+function redoAction(){
+  if(!historyFuture.length){toast('Nothing to redo');return;}
+  historyPast.push(taskSnapshot()); restoreTaskSnapshot(historyFuture.pop()); toast('Redone');
+}
 
 // ─── STORAGE ─────────────────────────────────────────────
 function save(){
@@ -1065,7 +1155,7 @@ function getDayLetter(date){
 
 function getSlotsForLetter(letter){ return DAY_SLOTS[letter]||[]; }
 
-function getDropped(letter){
+function getOff(letter){
   const vis=new Set(getSlotsForLetter(letter));
   return [1,2,3,4,5,6,7].filter(p=>!vis.has(p));
 }
@@ -1200,10 +1290,24 @@ function initOnboarding(){
 function buildPForm(listId){
   const list=document.getElementById(listId);
   list.innerHTML='';
+  const usedColors=new Set();
   for(let p=1;p<=7;p++){
     const def=cfg.periods.find(x=>x.num===p);
-    addPRow(listId, def||{num:p,name:'',color:PCOLS[p-1],isLab:false,labDays:[]}, p-1);
+    const base=def||{num:p,name:'',color:PCOLS[p-1],isLab:false,labDays:[]};
+    const color=nextAvailableColor(base.color,usedColors,p-1);
+    usedColors.add(color);
+    addPRow(listId,{...base,color},p-1);
   }
+}
+
+function nextAvailableColor(preferred,usedColors,fallbackIndex){
+  const preferredIndex=PCOLS.indexOf(preferred);
+  const start=preferredIndex>=0?preferredIndex:fallbackIndex%PCOLS.length;
+  for(let offset=0;offset<PCOLS.length;offset++){
+    const color=PCOLS[(start+offset)%PCOLS.length];
+    if(!usedColors.has(color))return color;
+  }
+  return PCOLS[start];
 }
 
 function addPRow(listId,def,idx){
@@ -1217,9 +1321,7 @@ function addPRow(listId,def,idx){
   row.className='prow'; row.dataset.p=pNum;
   row.innerHTML=`
     <div class="prow-top">
-      <button class="color-swatch" style="background:${color}" title="Pick color">
-        <input type="color" value="${color}" oninput="updateRowColor(this,${pNum})"/>
-      </button>
+      <span class="color-picker-wrap"><button class="color-swatch" style="background:${color}" title="Choose one of the seven unique class colors" onclick="event.stopPropagation();openColorPalette(this)"></button></span>
       <span class="pbadge" style="background:${color}" id="pb-${listId}-${pNum}">P${pNum}</span>
       <input type="text" placeholder="Course name (blank=free)" value="${esc(name)}" data-color="${color}"
         style="flex:1;min-width:0;padding:5px 8px;border:1.5px solid var(--border);border-radius:6px;font-size:12px;font-family:var(--f);outline:none"/>
@@ -1240,17 +1342,38 @@ function toggleLabPill(pill){
   pill.closest('.prow').querySelector('.prow-labs').style.display=on?'none':'flex';
 }
 
-function updateRowColor(inp, pNum){
-  const color=inp.value;
-  const row=inp.closest('.prow');
-  // update swatch background
-  inp.parentElement.style.background=color;
-  // update badge
+function openColorPalette(button){
+  closeColorPalettes();
+  const row=button.closest('.prow');
+  const usedColors=new Set([...row.parentElement.querySelectorAll('.prow')]
+    .filter(other=>other!==row)
+    .map(other=>other.querySelector('input[type="text"]')?.dataset.color)
+    .filter(Boolean));
+  const palette=document.createElement('span');
+  palette.className='color-palette';
+  PCOLS.forEach(color=>{
+    const choice=document.createElement('button');
+    choice.type='button'; choice.className='palette-color'; choice.style.background=color;
+    choice.title=usedColors.has(color)?'Already used by another class':'Use this color';
+    choice.disabled=usedColors.has(color);
+    choice.onclick=event=>{event.stopPropagation();chooseRowColor(button,color);};
+    palette.appendChild(choice);
+  });
+  button.parentElement.appendChild(palette);
+}
+
+function closeColorPalettes(){
+  document.querySelectorAll('.color-palette').forEach(palette=>palette.remove());
+}
+
+function chooseRowColor(button,color){
+  const row=button.closest('.prow');
+  const colorInput=row.querySelector('input[type="text"]');
+  button.style.background=color;
   const badge=row.querySelector('.pbadge');
   if(badge) badge.style.background=color;
-  // store on text input
-  const ti=row.querySelector('input[type="text"]');
-  if(ti) ti.dataset.color=color;
+  if(colorInput) colorInput.dataset.color=color;
+  closeColorPalettes();
 }
 
 function collectP(listId){
@@ -1282,6 +1405,11 @@ function launch(){
 function captureOpenSlotKeys(){
   openSlotKeys = new Set(
     [...document.querySelectorAll('.slot.open')]
+      .map(el => el.dataset.key || '')
+      .filter(Boolean)
+  );
+  collapsedAfterKeys = new Set(
+    [...document.querySelectorAll('.after.collapsed')]
       .map(el => el.dataset.key || '')
       .filter(Boolean)
   );
@@ -1339,7 +1467,7 @@ function renderWeek(){
 
     const hdr=document.createElement('div');
     hdr.className=`dh${isToday?' today':''}`;
-    hdr.innerHTML=`<div class="dn">${SHORT[date.getDay()]}</div><div class="dd">${date.getDate()}</div><div class="dh-meta">${badge}${countHtml}</div>${toggleHtml}`;
+    hdr.innerHTML=`<div class="dn">${SHORT[date.getDay()]}</div><div class="dd">${date.getMonth()+1}/${date.getDate()}</div><div class="dh-meta">${badge}${countHtml}</div>${toggleHtml}`;
     col.appendChild(hdr);
 
     const cont=document.createElement('div');
@@ -1362,21 +1490,21 @@ function renderWeek(){
     } else {
       const morning=DAY_MORNING[letter];   // [B1, B2, B3]
       const afternoon=DAY_AFTERNOON[letter]; // [B4, B5]
-      const dropped=getDropped(letter);
+      const Off=getOff(letter);
 
       // ── Morning: 3 blocks, but a double lab consumes 2 consecutive slots ──
       // Walk through morning slots; if a period is a double lab today it takes slot i and i+1,
-      // so the period that was supposed to be in slot i+1 gets displaced (shown as dropped).
+      // so the period that was supposed to be in slot i+1 gets displaced (shown as Off).
       const morningElems = [];
       let skipNext = false;
       for(let i = 0; i < morning.length; i++){
         const pNum = morning[i];
         const slotPos = i + 1; // bell positions 1, 2, 3
         if(skipNext){
-          // This slot was consumed by the previous double lab — show it as displaced/dropped
+          // This slot was consumed by the previous double lab — show it as displaced/Off
           const pDef = cfg.periods.find(p => p.num === pNum);
           if(pDef){
-            morningElems.push(buildDroppedSlot(ds, pDef, true)); // true = displaced by lab
+            morningElems.push(buildOffSlot(ds, pDef, true)); // true = displaced by lab
           }
           skipNext = false;
           continue;
@@ -1413,7 +1541,7 @@ function renderWeek(){
         if(skipNextAft){
           const pDef = cfg.periods.find(p => p.num === pNum);
           if(pDef){
-            afternoonElems.push(buildDroppedSlot(ds, pDef, true));
+            afternoonElems.push(buildOffSlot(ds, pDef, true));
           }
           skipNextAft = false;
           continue;
@@ -1426,7 +1554,7 @@ function renderWeek(){
       }
       afternoonElems.forEach(e => cont.appendChild(e));
 
-      // Dropped periods (not in schedule at all today) — shown faded so you can still add work
+      // Off periods (not in schedule at all today) — shown faded so you can still add work
       // Exclude periods that were displaced by a double lab (they already appear inline above)
       const displacedByLab = new Set();
       for(let i = 0; i < morning.length - 1; i++){
@@ -1438,18 +1566,18 @@ function renderWeek(){
         if(pDef && pDef.isLab && pDef.labDays.includes(letter)) displacedByLab.add(afternoon[i+1]);
       }
 
-      if(dropped.length){
+      if(Off.length){
         const dp=document.createElement('div');
         dp.style.cssText='margin-top:3px;display:flex;flex-direction:column;gap:3px';
-        dropped.forEach(pNum=>{
+        Off.forEach(pNum=>{
           if(displacedByLab.has(pNum)) return; // already shown inline
           const pDef=cfg.periods.find(p=>p.num===pNum);
-          if(pDef) dp.appendChild(buildDroppedSlot(ds, pDef, false));
+          if(pDef) dp.appendChild(buildOffSlot(ds, pDef, false));
         });
         if(dp.children.length) cont.appendChild(dp);
       }
 
-      // After school
+      // Extra Tasks
       cont.appendChild(afterCard(ds));
     }
 
@@ -1467,8 +1595,8 @@ function buildSlot(ds, pNum, slotPos, letter){
 
   if(!pDef){
     const el=document.createElement('div');
-    el.className='dropped'; el.style.opacity='0.4';
-    el.innerHTML=`<div class="dropped-dot" style="background:#bbb"></div><div class="dropped-name">P${pNum} — free</div>`;
+    el.className='Off'; el.style.opacity='0.4';
+    el.innerHTML=`<div class="Off-dot" style="background:#bbb"></div><div class="Off-name">P${pNum} — free</div>`;
     return [el];
   }
 
@@ -1521,7 +1649,7 @@ function buildSlot(ds, pNum, slotPos, letter){
         <div class="sc" style="background:${pDef.color}"></div>
         <div class="sn" style="color:var(--ts);font-style:italic" title="${esc(pDef.name)}">${esc(pDef.name)}</div>
         <div class="sp" style="background:${tagColor}">P${pNum} 🔬</div>
-        <div class="dropped-tag" style="margin-left:auto">cont.</div>
+        <div class="Off-tag" style="margin-left:auto">cont.</div>
       </div>
     `;
     return [el1, el2];
@@ -1530,10 +1658,10 @@ function buildSlot(ds, pNum, slotPos, letter){
   }
 }
 
-// ─── DROPPED SLOT (expandable task list for dropped periods) ──
+// ─── Off SLOT (expandable task list for Off periods) ──
 // displaced=true means this period was bumped by a double lab (shown inline in schedule order)
-// displaced=false means it's a normally dropped period (shown at bottom)
-function buildDroppedSlot(ds, pDef, displaced){
+// displaced=false means it's a normally Off period (shown at bottom)
+function buildOffSlot(ds, pDef, displaced){
   const taskKey=`${ds}_P${pDef.num}`;
   const tasks=data.tasks[taskKey]||[];
   const pending=tasks.filter(t=>!t.done).length;
@@ -1541,16 +1669,16 @@ function buildDroppedSlot(ds, pDef, displaced){
   const badgeClass=totalTasks===0?'empty':pending===0?'done-all':'';
   const tag = displaced
     ? `Lab`
-    : `P${pDef.num} dropped${pending?' · '+pending+' task'+(pending!==1?'s':''):''}`;
+    : `P${pDef.num} Off${pending?' · '+pending+' task'+(pending!==1?'s':''):''}`;
   const el=document.createElement('div');
   el.className='slot';
   el.style.cssText='opacity:0.72;border:1px dashed #ccc;background:#fafafa';
   el.dataset.key=taskKey;
   el.innerHTML=`
     <div class="slot-hd" onclick="this.parentElement.classList.toggle('open')" style="padding:4px 7px">
-      <div class="dropped-dot" style="background:${pDef.color};width:8px;height:8px;border-radius:50%;flex-shrink:0"></div>
+      <div class="Off-dot" style="background:${pDef.color};width:8px;height:8px;border-radius:50%;flex-shrink:0"></div>
       <div class="sn" style="color:var(--ts);font-style:italic" title="${esc(pDef.name)}">${esc(pDef.name)}</div>
-      <div class="dropped-tag">${tag}</div>
+      <div class="Off-tag">${tag}</div>
       <span class="stc ${badgeClass}" title="${totalTasks} task${totalTasks!==1?'s':''}">${totalTasks===0?'0':pending}</span>
       <div class="sv" style="font-size:9px;color:var(--ts)">▼</div>
     </div>
@@ -1623,10 +1751,15 @@ function afterCard(ds){
   const tasks=data.freeTasks[fKey]||[];
   const el=document.createElement('div');
   el.className='after';
+  el.dataset.key=fKey;
+  if(collapsedAfterKeys.has(fKey)) el.classList.add('collapsed');
   el.innerHTML=`
-    <div class="after-label">🏃 After School</div>
-    <ul class="tklist" id="tl-${fKey}"></ul>
-    <div class="after-input-row">
+    <div class="after-head" onclick="this.parentElement.classList.toggle('collapsed')" title="Minimize Extra Tasks">
+      <div class="after-label">🏃 Extra Tasks</div><span class="after-chevron">▼</span>
+    </div>
+    <div class="after-content">
+      <ul class="tklist" id="tl-${fKey}"></ul>
+      <div class="after-input-row">
       <div style="position:relative;flex-shrink:0">
         <input class="after-time-native" type="time" id="tm-${fKey}" tabindex="-1"
           onchange="afterTimeChanged('${ds}')"/>
@@ -1640,6 +1773,7 @@ function afterCard(ds){
       <input class="ai" placeholder="Activity or note…" id="ti-${fKey}"
         onkeydown="if(event.key==='Enter')addAfter('${ds}')"/>
       <button class="ab" onclick="addAfter('${ds}')">+</button>
+      </div>
     </div>
   `;
   renderAfterTasks(el.querySelector(`#tl-${fKey}`), fKey);
@@ -1650,6 +1784,7 @@ function afterCard(ds){
 function addTask(key){
   const inp=document.getElementById(`ti-${key}`);
   const txt=inp?.value.trim(); if(!txt)return;
+  recordHistory();
   if(!data.tasks[key])data.tasks[key]=[];
   data.tasks[key].push({id:Date.now()+Math.random(),text:txt,done:false});
   inp.value=''; save(); renderWeek();
@@ -1658,6 +1793,7 @@ function addTask(key){
 // Called by AI to write a task — returns true/false
 function aiAddTask(dateStr, periodNum, taskText){
   const key=`${dateStr}_P${periodNum}`;
+  recordHistory();
   if(!data.tasks[key])data.tasks[key]=[];
   data.tasks[key].push({id:Date.now()+Math.random(),text:taskText,done:false});
   save(); renderWeek(); return true;
@@ -1667,6 +1803,7 @@ function addFree(ds,suffix){
   const fKey=`${ds}-${suffix}`;
   const inp=document.getElementById(`ti-${fKey}`);
   const txt=inp?.value.trim(); if(!txt)return;
+  recordHistory();
   if(!data.freeTasks[fKey])data.freeTasks[fKey]=[];
   data.freeTasks[fKey].push({id:Date.now()+Math.random(),text:txt,done:false,time:''});
   inp.value=''; save();
@@ -1678,6 +1815,7 @@ function addAfter(ds){
   const inp=document.getElementById(`ti-${fKey}`);
   const timInp=document.getElementById(`tm-${fKey}`);
   const txt=inp?.value.trim(); if(!txt)return;
+  recordHistory();
   const time=timInp?.value||'';
   if(!data.freeTasks[fKey])data.freeTasks[fKey]=[];
   data.freeTasks[fKey].push({id:Date.now()+Math.random(),text:txt,done:false,time});
@@ -1716,18 +1854,16 @@ function afterTimeClear(ds){
 }
 
 function toggleTask(key,id){
-  const t=(data.tasks[key]||[]).find(t=>t.id==id); if(t)t.done=!t.done; save(); renderWeek();
+  const t=(data.tasks[key]||[]).find(t=>t.id==id); if(t){recordHistory();t.done=!t.done;save();renderWeek();}
 }
 function delTask(key,id){
-  data.tasks[key]=(data.tasks[key]||[]).filter(t=>t.id!=id); save(); renderWeek();
+  if((data.tasks[key]||[]).some(t=>t.id==id)){recordHistory();data.tasks[key]=(data.tasks[key]||[]).filter(t=>t.id!=id);save();renderWeek();}
 }
 function toggleFree(fKey,id){
-  const t=(data.freeTasks[fKey]||[]).find(t=>t.id==id); if(t)t.done=!t.done; save();
-  renderWeek();
+  const t=(data.freeTasks[fKey]||[]).find(t=>t.id==id); if(t){recordHistory();t.done=!t.done;save();renderWeek();}
 }
 function delFree(fKey,id){
-  data.freeTasks[fKey]=(data.freeTasks[fKey]||[]).filter(t=>t.id!=id); save();
-  renderWeek();
+  if((data.freeTasks[fKey]||[]).some(t=>t.id==id)){recordHistory();data.freeTasks[fKey]=(data.freeTasks[fKey]||[]).filter(t=>t.id!=id);save();renderWeek();}
 }
 
 function renderTasks(el,key){
@@ -1749,7 +1885,7 @@ function renderTasks(el,key){
   // Real tasks
   tasks.forEach(t=>{
     const li=document.createElement('li'); li.className='tki';
-    li.innerHTML=`<div class="tkc${t.done?' done':''}" onclick="toggleTask('${key}',${t.id})" tabindex="0"></div><span class="tkt${t.done?' done':''}">${esc(t.text)}</span><button class="tkd" onclick="delTask('${key}',${t.id})">×</button>`;
+    li.innerHTML=`<div class="tkc${t.done?' done':''}" onclick="toggleTask('${key}',${t.id})" tabindex="0"></div><span class="tkt${t.done?' done':''}" onclick="openMoveTask('task','${key}',${t.id})" title="Click to move this task">${esc(t.text)}</span><span class="task-tools"><button class="task-tool" onclick="startTaskTimerEncoded('${encodeURIComponent(t.text)}')" title="Time this task">◷</button><button class="tkd" onclick="delTask('${key}',${t.id})">×</button></span>`;
     el.appendChild(li);
   });
 }
@@ -1772,7 +1908,7 @@ function renderFreeTasks(el,fKey){
   });
   tasks.forEach(t=>{
     const li=document.createElement('li'); li.className='tki';
-    li.innerHTML=`<div class="tkc${t.done?' done':''}" onclick="toggleFree('${fKey}',${t.id})" tabindex="0"></div><span class="tkt${t.done?' done':''}">${esc(t.text)}</span><button class="tkd" onclick="delFree('${fKey}',${t.id})">×</button>`;
+    li.innerHTML=`<div class="tkc${t.done?' done':''}" onclick="toggleFree('${fKey}',${t.id})" tabindex="0"></div><span class="tkt${t.done?' done':''}" onclick="openMoveTask('free','${fKey}',${t.id})" title="Click to move this task">${esc(t.text)}</span><span class="task-tools"><button class="task-tool" onclick="startTaskTimerEncoded('${encodeURIComponent(t.text)}')" title="Time this task">◷</button><button class="tkd" onclick="delFree('${fKey}',${t.id})">×</button></span>`;
     el.appendChild(li);
   });
 }
@@ -1793,10 +1929,63 @@ function renderAfterTasks(el,fKey){
   tasks.forEach(t=>{
     const li=document.createElement('li'); li.className='tki';
     const timeLabel=t.time?`<span style="font-size:10px;color:var(--primary);font-weight:700;white-space:nowrap">${t.time}</span>`:'';
-    li.innerHTML=`<div class="tkc${t.done?' done':''}" onclick="toggleFree('${fKey}',${t.id})" tabindex="0"></div>${timeLabel}<span class="tkt${t.done?' done':''}">${esc(t.text)}</span><button class="tkd" onclick="delFree('${fKey}',${t.id})">×</button>`;
+    li.innerHTML=`<div class="tkc${t.done?' done':''}" onclick="toggleFree('${fKey}',${t.id})" tabindex="0"></div>${timeLabel}<span class="tkt${t.done?' done':''}" onclick="openMoveTask('free','${fKey}',${t.id})" title="Click to move this task">${esc(t.text)}</span><span class="task-tools"><button class="task-tool" onclick="startTaskTimerEncoded('${encodeURIComponent(t.text)}')" title="Time this task">◷</button><button class="tkd" onclick="delFree('${fKey}',${t.id})">×</button></span>`;
     el.appendChild(li);
   });
 }
+
+function openMoveTask(type,key,id){
+  moveState={type,key,id};
+  const sourceList=type==='task'?(data.tasks[key]||[]):(data.freeTasks[key]||[]);
+  const source=sourceList.find(t=>t.id==id);
+  if(!source)return;
+  document.getElementById('move-label').textContent=`Move “${source.text}” to another list.`;
+  const list=document.getElementById('move-list'); list.innerHTML='';
+  const destinations=[];
+  Object.keys(data.tasks).filter(k=>k!==key).forEach(k=>destinations.push({type:'task',key:k,label:k.replace('_P',' · P')}));
+  Object.keys(data.freeTasks).filter(k=>k!==key).forEach(k=>destinations.push({type:'free',key:k,label:k.replace('-', ' · ')}));
+  cfg.periods.forEach(p=>{
+    const k=`${toDS(wkStart)}_P${p.num}`;
+    if(!destinations.some(d=>d.key===k))destinations.push({type:'task',key:k,label:`This week · ${p.name} (P${p.num})`});
+  });
+  if(!destinations.length)list.innerHTML='<p class="mds">No other task lists are available yet.</p>';
+  destinations.forEach(dest=>{
+    const btn=document.createElement('button'); btn.className='move-option'; btn.innerHTML=`<span>${esc(dest.label)}</span><span>›</span>`;
+    btn.onclick=()=>moveTaskTo(dest.type,dest.key); list.appendChild(btn);
+  });
+  openMod('movemod');
+}
+function moveTaskTo(type,key){
+  if(!moveState)return;
+  const sourceList=moveState.type==='task'?(data.tasks[moveState.key]||[]):(data.freeTasks[moveState.key]||[]);
+  const index=sourceList.findIndex(t=>t.id==moveState.id); if(index<0)return;
+  recordHistory(); const task=sourceList.splice(index,1)[0];
+  const destination=type==='task'?data.tasks:data.freeTasks;
+  if(!destination[key])destination[key]=[]; destination[key].push(task);
+  save(); renderWeek(); closeMod('movemod'); toast('Task moved'); moveState=null;
+}
+
+function openCalendar(){ calendarMonth=dateOnly(wkStart||new Date()); renderCalendar(); openMod('calmod'); }
+function shiftCalendar(amount){ calendarMonth.setMonth(calendarMonth.getMonth()+amount); renderCalendar(); }
+function renderCalendar(){
+  const title=document.getElementById('cal-title'); const grid=document.getElementById('calendar-grid');
+  const monthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  title.textContent=`${monthNames[calendarMonth.getMonth()]} ${calendarMonth.getFullYear()}`; grid.innerHTML='';
+  SHORT.forEach(day=>{const h=document.createElement('div');h.className='calendar-weekday';h.textContent=day;grid.appendChild(h);});
+  const first=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth(),1); const start=new Date(first); start.setDate(1-first.getDay());
+  for(let i=0;i<42;i++){const d=addDays(start,i), b=document.createElement('button'); const ds=toDS(d); b.className='calendar-day'+(d.getMonth()!==calendarMonth.getMonth()?' muted ':'')+(ds===toDS(new Date())?' today':'')+(wkStart&&ds===toDS(wkStart)?' selected':''); b.textContent=d.getDate(); b.title=`Open week of ${ds}`; b.onclick=()=>{wkStart=getWkStart(d);renderWeek();closeMod('calmod');}; grid.appendChild(b);}
+}
+
+function openTimer(){ document.getElementById('timer-task').textContent=timerTask||'No task selected'; updateTimerDisplay(); openMod('timermod'); }
+function startTaskTimer(text){ timerTask=text; openTimer(); }
+function startTaskTimerEncoded(text){ startTaskTimer(decodeURIComponent(text)); }
+function updateTimerDisplay(){const m=String(Math.floor(timerSeconds/60)).padStart(2,'0'),s=String(timerSeconds%60).padStart(2,'0');document.getElementById('timer-display').textContent=`${m}:${s}`;}
+function toggleTimer(){
+  const button=document.getElementById('timer-toggle');
+  if(timerHandle){clearInterval(timerHandle);timerHandle=null;button.textContent='Start';return;}
+  button.textContent='Pause'; timerHandle=setInterval(()=>{if(timerSeconds<=0){clearInterval(timerHandle);timerHandle=null;button.textContent='Start';toast('Timer complete');return;}timerSeconds--;updateTimerDisplay();},1000);
+}
+function resetTimer(){if(timerHandle){clearInterval(timerHandle);timerHandle=null;}timerSeconds=25*60;document.getElementById('timer-toggle').textContent='Start';updateTimerDisplay();}
 
 // ─── DAY OVERRIDE ────────────────────────────────────────
 function openDayMod(ds){
@@ -1824,6 +2013,7 @@ function initSettings(){
     t.classList.add('active');
   }));
   document.querySelectorAll('.mo').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)closeMod(o.id)}));
+  document.addEventListener('click',closeColorPalettes);
 }
 function openSettings(){
   document.querySelectorAll('#ss-school .st').forEach(t=>t.classList.toggle('active',t.dataset.t===cfg.school));
@@ -1943,7 +2133,7 @@ function renderAutoList(){
     return;
   }
   list.innerHTML='';
-  const whereLabel={'same':'→ class slot','lunch':'→ Lunch','after':'→ After School'};
+  const whereLabel={'same':'→ class slot','lunch':'→ Lunch','after':'→ Extra Tasks'};
   const wdNames=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   autos.forEach(a=>{
     let trigger='';
