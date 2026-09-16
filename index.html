@@ -22,7 +22,8 @@
     }
     body{font-family:var(--f);background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
     .screen{display:none;flex-direction:column;min-height:100vh}
-    .screen.active{display:flex}
+    .screen.active{display:flex;animation:screen-in .35s ease both}
+    @keyframes screen-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
     #screen-app{min-height:unset;height:100vh;overflow:hidden}
 
     /* ── Onboard ── */
@@ -79,6 +80,8 @@
     .dots{display:flex;gap:6px;justify-content:center;margin-top:16px}
     .dot{width:8px;height:8px;border-radius:50%;background:var(--border);transition:background .2s}
     .dot.active{background:var(--primary)}
+    .onboarding-actions{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-top:12px}
+    .onboarding-actions .btn{flex:1}
 
     /* letter day picker */
     .dpg{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:8px 0}
@@ -201,17 +204,6 @@
 
     /* Extra Tasks timing row */
     .after-input-row{display:flex;gap:4px;margin-bottom:4px;align-items:center}
-    /* hidden native time input — zero size, invisible, used only to open OS picker */
-    .after-time-native{position:absolute;opacity:0;pointer-events:none;width:0;height:0;border:none;padding:0}
-    /* clock icon button shown when no time set */
-    .after-time-btn{flex-shrink:0;width:26px;height:26px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--ts);transition:background .15s,border-color .15s;position:relative}
-    .after-time-btn:hover{background:var(--pl);border-color:var(--primary)}
-    /* pill shown once a time is selected */
-    .after-time-pill{display:none;flex-shrink:0;align-items:center;gap:3px;background:var(--pl);border:1px solid var(--primary);border-radius:12px;padding:2px 7px 2px 6px;cursor:pointer;font-size:10px;font-weight:700;color:var(--primary);white-space:nowrap;transition:background .15s}
-    .after-time-pill:hover{background:#c5d9fb}
-    .after-time-pill.has-time{display:flex}
-    .after-time-pill-x{font-size:11px;color:var(--primary);opacity:.7;margin-left:1px;font-weight:400;line-height:1}
-
     /* ── Chat ── */
     .cp{background:var(--surface);border-top:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;transition:height .25s}
     .cp.col{height:42px}.cp.exp{height:300px}
@@ -242,8 +234,12 @@
 
     /* ── Modals ── */
     .mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center;padding:16px}
-    .mo.open{display:flex}
-    .md{background:var(--surface);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.2);padding:24px 24px;width:100%;max-width:420px;max-height:85vh;overflow-y:auto}
+    .mo.open{display:flex;animation:fade-in .2s ease both}
+    .md{background:var(--surface);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.2);padding:24px 24px;width:100%;max-width:420px;max-height:85vh;overflow-y:auto;animation:modal-in .28s cubic-bezier(.2,.8,.2,1) both}
+    @keyframes fade-in{from{opacity:0}to{opacity:1}}
+    @keyframes modal-in{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+    @keyframes reveal-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+    .reveal-in{animation:reveal-in .3s ease both}
     .md h2{font-size:17px;font-weight:700;margin-bottom:3px}
     .mds{font-size:12px;color:var(--ts);margin-bottom:16px}
     .mda{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}
@@ -259,8 +255,18 @@
     .calendar-day:hover,.calendar-day.selected{border-color:var(--primary);background:var(--pl);color:var(--primary)}
     .calendar-day.muted{color:#adb0b5;background:var(--surface2)}
     .calendar-day.today{box-shadow:inset 0 -3px 0 var(--primary)}
-    .timer-panel{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:16px;text-align:center}
-    .timer-display{font-size:42px;font-weight:700;letter-spacing:1px;color:var(--primary);margin:8px 0 14px}
+    .timer-panel{background:linear-gradient(145deg,var(--surface2),var(--surface));border:1px solid var(--border);border-radius:var(--r);padding:16px;text-align:center;transition:box-shadow .25s, border-color .25s}
+    .timer-panel.running{border-color:var(--primary);box-shadow:0 0 0 4px var(--pl)}
+    .timer-display{font-size:42px;font-weight:700;letter-spacing:1px;color:var(--primary);margin:8px 0 14px;font-variant-numeric:tabular-nums;transition:color .25s,transform .25s}
+    .timer-display.tick{animation:timer-tick .35s ease}
+    @keyframes timer-tick{50%{transform:scale(1.04);color:var(--pd)}}
+    .timer-mode-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:4px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;margin-bottom:14px}
+    .timer-mode-tab{border:0;border-radius:7px;background:transparent;color:var(--ts);cursor:pointer;padding:7px 4px;font:600 11px var(--f);transition:all .2s}
+    .timer-mode-tab.active{background:var(--surface);color:var(--primary);box-shadow:var(--sh)}
+    .timer-settings{display:flex;gap:8px;align-items:end;margin-bottom:12px;text-align:left}
+    .timer-settings .fg{flex:1;margin-bottom:0}
+    .timer-settings input{width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--r);font:600 13px var(--f);color:var(--text);background:var(--surface);outline:none}
+    .timer-settings input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(26,115,232,.1)}
     .timer-task{font-size:12px;color:var(--ts);min-height:18px}
     .timer-actions{display:flex;gap:8px;justify-content:center}
     .timer-actions .btn{min-width:82px}
@@ -268,8 +274,21 @@
     .move-option{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 10px;border:1px solid var(--border);border-radius:7px;background:var(--surface);cursor:pointer;text-align:left;font:600 12px var(--f);color:var(--text)}
     .move-option:hover{border-color:var(--primary);background:var(--pl)}
     .task-tools{display:flex;align-items:center;gap:2px;flex-shrink:0}
-    .task-tool{border:0;background:none;color:var(--ts);cursor:pointer;padding:0 2px;font-size:11px;opacity:0}
+    .task-tool{border:0;background:none;color:var(--ts);cursor:pointer;padding:0 2px;font-size:11px;opacity:0;transition:opacity .15s,color .15s}
+    .task-tool.time-tool{opacity:.65;color:var(--primary)}
+    .task-time{font-size:10px;color:var(--primary);font-weight:700;white-space:nowrap;flex-shrink:0}
     .tki:hover .task-tool{opacity:1}
+    .task-settings-btn{border:0;background:none;color:var(--ts);cursor:pointer;padding:2px 3px;font-size:14px;opacity:.75;transition:color .2s,transform .2s}
+    .task-settings-btn:hover{color:var(--primary);transform:rotate(25deg)}
+    .task-action-list{display:flex;flex-direction:column;gap:7px;margin-top:14px}
+    .task-action{display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface);color:var(--text);font:600 12px var(--f);cursor:pointer;text-align:left;transition:all .2s}
+    .task-action:hover{border-color:var(--primary);background:var(--pl);color:var(--primary);transform:translateX(2px)}
+    .task-action-icon{width:22px;text-align:center;font-size:16px}
+    .task-action.danger{color:var(--danger)}
+    .task-action.danger:hover{border-color:var(--danger);background:#fce8e6}
+    .alarm-fields{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;text-align:left}
+    .alarm-fields select{width:100%;padding:8px 7px;border:1.5px solid var(--border);border-radius:var(--r);background:var(--surface);color:var(--text);font:600 13px var(--f);outline:none}
+    .alarm-fields select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(26,115,232,.1)}
 
     /* automation ghost tasks */
     .tki.auto-item{opacity:.75;background:linear-gradient(90deg,#e8f0fe33,transparent)}
@@ -277,7 +296,8 @@
     .auto-badge{font-size:9px;background:var(--pl);color:var(--primary);padding:1px 5px;border-radius:8px;white-space:nowrap;flex-shrink:0}
 
     /* automation list rows */
-    .auto-row{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);font-size:12px}
+    .auto-row{display:flex;align-items:center;gap:8px;padding:10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);font-size:12px;animation:reveal-in .3s ease both;transition:border-color .2s,box-shadow .2s,transform .2s}
+    .auto-row:hover{border-color:#b8cdf1;box-shadow:var(--sh);transform:translateY(-1px)}
     .auto-row-info{flex:1;min-width:0}
     .auto-row-title{font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .auto-row-sub{font-size:10px;color:var(--ts);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -285,6 +305,15 @@
     .auto-toggle.on{background:var(--primary)}.auto-toggle.off{background:#bdbdbd}
     .auto-toggle::after{content:'';position:absolute;top:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .2s}
     .auto-toggle.on::after{left:16px}.auto-toggle.off::after{left:2px}
+    .auto-builder{background:var(--surface2);border-radius:var(--r);padding:12px;border:1px solid var(--border);animation:reveal-in .35s ease both}
+    .auto-trigger-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+    .auto-trigger-grid .st{min-width:0;text-align:left;padding:9px 10px;background:var(--surface)}
+    .auto-check-grid{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+    .auto-check{display:inline-flex;align-items:center;gap:6px;padding:6px 9px;border:1px solid var(--border);border-radius:7px;background:var(--surface);font-size:12px;color:var(--ts);cursor:pointer;transition:all .2s}
+    .auto-check:has(input:checked){border-color:var(--primary);background:var(--pl);color:var(--primary);font-weight:600}
+    .auto-check input{accent-color:var(--primary);width:14px;height:14px}
+    .auto-field select,.auto-field input{width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:var(--r);font:13px var(--f);outline:none;color:var(--text);background:var(--surface);transition:border-color .2s,box-shadow .2s}
+    .auto-field select:focus,.auto-field input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(26,115,232,.1)}
 
     /* ── Toast ── */
     #toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%) translateY(60px);background:#202124;color:#fff;padding:8px 16px;border-radius:7px;font-size:13px;z-index:9999;transition:transform .22s;pointer-events:none;white-space:nowrap}
@@ -302,6 +331,8 @@
       .mda{justify-content:stretch}
       .mda .btn{flex:1;justify-content:center}
       .settings-actions{gap:4px}.settings-actions .btn{font-size:11px;padding-left:3px;padding-right:3px}
+      .timer-settings{gap:5px}.timer-settings input{font-size:12px;padding-left:7px;padding-right:7px}
+      .auto-trigger-grid{grid-template-columns:1fr}
     }
     @media(max-width:400px){
       .ocard{padding:20px 12px}
@@ -312,6 +343,9 @@
 
     /* ── Auth Screen ── */
     #screen-auth{align-items:center;justify-content:center;background:linear-gradient(135deg,#e8f0fe 0%,#f8f9fa 55%,#e6f4ea 100%);padding:16px}
+    .auth-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+    .auth-back{display:none;border:none;background:transparent;color:var(--primary);cursor:pointer;font:700 12px var(--f);padding:4px 0}
+    .auth-back.visible{display:inline-flex;align-items:center;gap:4px}
     .auth-tabs{display:flex;gap:0;border-radius:var(--r);overflow:hidden;border:1.5px solid var(--border);margin-bottom:20px}
     .auth-tab{flex:1;padding:9px;border:none;background:var(--surface2);cursor:pointer;font-size:13px;font-weight:600;font-family:var(--f);color:var(--ts);transition:all .2s}
     .auth-tab.active{background:var(--primary);color:#fff}
@@ -347,6 +381,10 @@
   </div>
   <p style="font-size:13px;color:var(--ts);margin-bottom:20px">Your schedule, synced across all your devices.</p>
 
+  <div class="auth-header">
+    <button class="auth-back" id="auth-back-btn" type="button">← Back</button>
+    <div style="flex:1"></div>
+  </div>
   <div class="auth-tabs">
     <button class="auth-tab active" id="tab-signin" onclick="switchAuthTab('signin')">Sign In</button>
     <button class="auth-tab" id="tab-signup" onclick="switchAuthTab('signup')">Create Account</button>
@@ -418,7 +456,10 @@
       </div>
       <p style="font-size:11px;color:var(--ts)">Not sure? Skip for now — you can fix it any time by clicking a day badge on the calendar.</p>
     </div>
-    <button class="btn bp bfull" onclick="s2next()">Continue →</button>
+    <div class="onboarding-actions">
+      <button id="onboarding-back-step1" class="btn bs" type="button" onclick="goBackOnboarding()">← Back</button>
+      <button class="btn bp" type="button" onclick="s2next()">Continue →</button>
+    </div>
   </div>
 
   <!-- Step 2 -->
@@ -427,7 +468,10 @@
     <h2 class="step-h">Your 7 Periods</h2>
     <p class="step-p">Enter what class you have each period. Leave blank for a free/study period. Check "Double lab" if a course spans two consecutive periods (e.g. P3+P4) — then pick which letter days it runs as a double.</p>
     <div class="plist" id="plist"></div>
-    <button class="btn bp bfull" style="margin-top:12px" onclick="s3done()">Launch Planner 🚀</button>
+    <div class="onboarding-actions" style="margin-top:12px">
+      <button id="onboarding-back-step2" class="btn bs" type="button" onclick="goBackOnboarding()">← Back</button>
+      <button class="btn bp" type="button" onclick="s3done()">Launch Planner 🚀</button>
+    </div>
   </div>
 
   <div class="dots">
@@ -506,13 +550,13 @@
 
     <div id="auto-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px"></div>
 
-    <div style="background:var(--surface2);border-radius:var(--r);padding:12px;border:1px solid var(--border)">
+    <div class="auto-builder">
       <p style="font-size:11px;font-weight:700;color:var(--ts);text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px">＋ New Automation</p>
 
       <!-- TRIGGER: when does it fire? -->
       <div class="fg" style="margin-bottom:8px">
         <label>Trigger — when does it repeat?</label>
-        <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <div class="auto-trigger-grid">
           <button class="st active" id="auto-type-class"   onclick="setAutoType('class')"   >📚 Every time a class meets</button>
           <button class="st"        id="auto-type-weekday" onclick="setAutoType('weekday')">📅 Every specific weekday</button>
           <button class="st"        id="auto-type-letter"  onclick="setAutoType('letter')" >🔠 Every Day letter</button>
@@ -530,28 +574,16 @@
       <!-- weekday trigger: checkboxes -->
       <div id="auto-weekday-pick" class="fg" style="margin-bottom:8px;display:none">
         <label>Which day(s) of the week?</label>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px">
-          <label style="display:flex;align-items:center;gap:3px;font-size:13px;cursor:pointer"><input type="checkbox" value="0" class="awd"/> Sun</label>
-          <label style="display:flex;align-items:center;gap:3px;font-size:13px;cursor:pointer"><input type="checkbox" value="1" class="awd"/> Mon</label>
-          <label style="display:flex;align-items:center;gap:3px;font-size:13px;cursor:pointer"><input type="checkbox" value="2" class="awd"/> Tue</label>
-          <label style="display:flex;align-items:center;gap:3px;font-size:13px;cursor:pointer"><input type="checkbox" value="3" class="awd"/> Wed</label>
-          <label style="display:flex;align-items:center;gap:3px;font-size:13px;cursor:pointer"><input type="checkbox" value="4" class="awd"/> Thu</label>
-          <label style="display:flex;align-items:center;gap:3px;font-size:13px;cursor:pointer"><input type="checkbox" value="5" class="awd"/> Fri</label>
-          <label style="display:flex;align-items:center;gap:3px;font-size:13px;cursor:pointer"><input type="checkbox" value="6" class="awd"/> Sat</label>
+        <div class="auto-check-grid">
+          <label class="auto-check"><input type="checkbox" value="0" class="awd"/> Sun</label><label class="auto-check"><input type="checkbox" value="1" class="awd"/> Mon</label><label class="auto-check"><input type="checkbox" value="2" class="awd"/> Tue</label><label class="auto-check"><input type="checkbox" value="3" class="awd"/> Wed</label><label class="auto-check"><input type="checkbox" value="4" class="awd"/> Thu</label><label class="auto-check"><input type="checkbox" value="5" class="awd"/> Fri</label><label class="auto-check"><input type="checkbox" value="6" class="awd"/> Sat</label>
         </div>
       </div>
 
       <!-- letter trigger: checkboxes -->
       <div id="auto-letter-pick" class="fg" style="margin-bottom:8px;display:none">
         <label>Which Day letter(s)?</label>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px">
-          <label style="display:flex;align-items:center;gap:3px;font-size:13px;cursor:pointer"><input type="checkbox" value="A" class="ald"/> A</label>
-          <label style="display:flex;align-items:center;gap:3px;font-size:13px;cursor:pointer"><input type="checkbox" value="B" class="ald"/> B</label>
-          <label style="display:flex;align-items:center;gap:3px;font-size:13px;cursor:pointer"><input type="checkbox" value="C" class="ald"/> C</label>
-          <label style="display:flex;align-items:center;gap:3px;font-size:13px;cursor:pointer"><input type="checkbox" value="D" class="ald"/> D</label>
-          <label style="display:flex;align-items:center;gap:3px;font-size:13px;cursor:pointer"><input type="checkbox" value="E" class="ald"/> E</label>
-          <label style="display:flex;align-items:center;gap:3px;font-size:13px;cursor:pointer"><input type="checkbox" value="F" class="ald"/> F</label>
-          <label style="display:flex;align-items:center;gap:3px;font-size:13px;cursor:pointer"><input type="checkbox" value="G" class="ald"/> G</label>
+        <div class="auto-check-grid">
+          <label class="auto-check"><input type="checkbox" value="A" class="ald"/> A</label><label class="auto-check"><input type="checkbox" value="B" class="ald"/> B</label><label class="auto-check"><input type="checkbox" value="C" class="ald"/> C</label><label class="auto-check"><input type="checkbox" value="D" class="ald"/> D</label><label class="auto-check"><input type="checkbox" value="E" class="ald"/> E</label><label class="auto-check"><input type="checkbox" value="F" class="ald"/> F</label><label class="auto-check"><input type="checkbox" value="G" class="ald"/> G</label>
         </div>
       </div>
 
@@ -642,11 +674,39 @@
   </div>
 </div>
 
+<!-- TASK EDITOR MODAL -->
+<div class="mo" id="taskeditmod">
+  <div class="md" style="max-width:360px">
+    <h2>Task options</h2><p class="mds" id="task-edit-subtitle">Edit, focus, or remove this task.</p>
+    <div class="fg"><label for="task-edit-text">Task</label><input id="task-edit-text" type="text" /></div>
+    <div class="fg"><label for="task-edit-time">Time (optional)</label><input id="task-edit-time" type="time" /></div>
+    <div class="mda"><button class="btn bs" onclick="closeMod('taskeditmod')">Cancel</button><button class="btn bp" onclick="saveTaskEdit()">Save changes</button></div>
+    <div class="task-action-list">
+      <button class="task-action" onclick="taskEditorStartTimer()"><span class="task-action-icon">◷</span>Start focus timer</button>
+      <button class="task-action danger" onclick="deleteTaskFromEditor()"><span class="task-action-icon">×</span>Delete task</button>
+    </div>
+  </div>
+</div>
+
 <!-- TIMER MODAL -->
 <div class="mo" id="timermod">
   <div class="md" style="max-width:340px">
     <h2>Focus timer</h2><p class="mds">A simple timer for the task you are working on.</p>
-    <div class="timer-panel"><div class="timer-task" id="timer-task">No task selected</div><div class="timer-display" id="timer-display">25:00</div><div class="timer-actions"><button class="btn bp" id="timer-toggle" onclick="toggleTimer()">Start</button><button class="btn bs" onclick="resetTimer()">Reset</button></div></div>
+    <div class="timer-mode-tabs" role="tablist" aria-label="Focus timer mode">
+      <button class="timer-mode-tab active" data-mode="timer" onclick="setTimerMode('timer')">Timer</button>
+      <button class="timer-mode-tab" data-mode="stopwatch" onclick="setTimerMode('stopwatch')">Stopwatch</button>
+      <button class="timer-mode-tab" data-mode="alarm" onclick="setTimerMode('alarm')">Alarm</button>
+    </div>
+    <div class="timer-panel" id="timer-panel">
+      <div class="timer-task" id="timer-task">No task selected</div>
+      <div class="timer-display" id="timer-display">25:00</div>
+      <div class="timer-settings" id="timer-settings">
+        <div class="fg"><label id="timer-minutes-label">Minutes</label><input id="timer-minutes" type="number" min="1" max="999" value="25" onchange="applyTimerSettings()"/></div>
+        <div class="fg" id="timer-seconds-field"><label>Seconds</label><input id="timer-seconds" type="number" min="0" max="59" value="0" onchange="applyTimerSettings()"/></div>
+        <div class="fg" id="timer-alarm-field" style="display:none"><label>Alarm time</label><div class="alarm-fields"><select id="timer-alarm-hour" aria-label="Alarm hour" onchange="applyTimerSettings()"></select><select id="timer-alarm-minute" aria-label="Alarm minute" onchange="applyTimerSettings()"></select><select id="timer-alarm-ampm" aria-label="AM or PM" onchange="applyTimerSettings()"><option>AM</option><option>PM</option></select></div></div>
+      </div>
+      <div class="timer-actions"><button class="btn bp" id="timer-toggle" onclick="toggleTimer()">Start</button><button class="btn bs" onclick="stopTimer()">Stop</button><button class="btn bs" onclick="resetTimer()">Reset</button></div>
+    </div>
     <div class="mda"><button class="btn bs" onclick="closeMod('timermod')">Close</button></div>
   </div>
 </div>
@@ -671,7 +731,33 @@ function switchAuthTab(tab){
   document.getElementById('tab-signup').classList.toggle('active',  isSignup);
   document.getElementById('auth-submit-btn').textContent = isSignup ? 'Create Account →' : 'Sign In →';
   document.getElementById('auth-password').setAttribute('autocomplete', isSignup ? 'new-password' : 'current-password');
+  const authBack = document.getElementById('auth-back-btn');
+  if (authBack) authBack.classList.toggle('visible', isSignup);
   clearAuthMsg();
+}
+
+function goBackFromAuth(){
+  switchAuthTab('signin');
+}
+
+function bindBackButtons(){
+  const authBack = document.getElementById('auth-back-btn');
+  if (authBack && !authBack.dataset.bound) {
+    authBack.addEventListener('click', goBackFromAuth);
+    authBack.dataset.bound = 'true';
+  }
+
+  const onboardingBack1 = document.getElementById('onboarding-back-step1');
+  if (onboardingBack1 && !onboardingBack1.dataset.bound) {
+    onboardingBack1.addEventListener('click', goBackOnboarding);
+    onboardingBack1.dataset.bound = 'true';
+  }
+
+  const onboardingBack2 = document.getElementById('onboarding-back-step2');
+  if (onboardingBack2 && !onboardingBack2.dataset.bound) {
+    onboardingBack2.addEventListener('click', goBackOnboarding);
+    onboardingBack2.dataset.bound = 'true';
+  }
 }
 
 function showAuthErr(msg){ setAuthMsg(msg, true); }
@@ -832,6 +918,7 @@ async function onSignedIn(user){
     return;
   }
 
+  bindBackButtons();
   launch();
 }
 
@@ -1060,7 +1147,7 @@ let openSlotKeys = new Set();
 let collapsedAfterKeys = new Set();
 let historyPast = [], historyFuture = [], moveState = null;
 let calendarMonth = dateOnly(new Date());
-let timerSeconds = 25 * 60, timerHandle = null, timerTask = '';
+let timerSeconds = 25 * 60, timerHandle = null, timerTask = '', timerMode = 'timer', timerAlarmAt = '';
 
 function taskSnapshot(){ return JSON.stringify({tasks:data.tasks,freeTasks:data.freeTasks}); }
 function recordHistory(){
@@ -1249,6 +1336,16 @@ function setDayState(ds, makeOff){
 }
 
 
+function goBackOnboarding(){
+  const s2 = document.getElementById('s2');
+  const s3 = document.getElementById('s3');
+  if(!s2 || !s3) return;
+  s2.style.display = 'block';
+  s3.style.display = 'none';
+  setDot(1);
+  return false;
+}
+
 function s2next(){
   const t=document.querySelector('#s2-school .st.active');
   cfg.school=t?t.dataset.t:'early';
@@ -1258,7 +1355,7 @@ function s2next(){
   }
   document.getElementById('s2').style.display='none';
   document.getElementById('s3').style.display='block';
-  document.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active',i<3));
+  setDot(2);
   try{ buildPForm('plist'); }catch(e){ console.error('buildPForm error',e); }
 }
 
@@ -1760,16 +1857,6 @@ function afterCard(ds){
     <div class="after-content">
       <ul class="tklist" id="tl-${fKey}"></ul>
       <div class="after-input-row">
-      <div style="position:relative;flex-shrink:0">
-        <input class="after-time-native" type="time" id="tm-${fKey}" tabindex="-1"
-          onchange="afterTimeChanged('${ds}')"/>
-        <button class="after-time-btn" id="tb-${fKey}" title="Set time"
-          onclick="document.getElementById('tm-${fKey}').showPicker?document.getElementById('tm-${fKey}').showPicker():document.getElementById('tm-${fKey}').click()">🕐</button>
-        <span class="after-time-pill" id="tp-${fKey}"
-          onclick="document.getElementById('tm-${fKey}').showPicker?document.getElementById('tm-${fKey}').showPicker():document.getElementById('tm-${fKey}').click()">
-          <span id="tpl-${fKey}"></span><span class="after-time-pill-x" onclick="event.stopPropagation();afterTimeClear('${ds}')">×</span>
-        </span>
-      </div>
       <input class="ai" placeholder="Activity or note…" id="ti-${fKey}"
         onkeydown="if(event.key==='Enter')addAfter('${ds}')"/>
       <button class="ab" onclick="addAfter('${ds}')">+</button>
@@ -1786,7 +1873,7 @@ function addTask(key){
   const txt=inp?.value.trim(); if(!txt)return;
   recordHistory();
   if(!data.tasks[key])data.tasks[key]=[];
-  data.tasks[key].push({id:Date.now()+Math.random(),text:txt,done:false});
+  data.tasks[key].push({id:Date.now()+Math.random(),text:txt,done:false,time:''});
   inp.value=''; save(); renderWeek();
 }
 
@@ -1795,7 +1882,7 @@ function aiAddTask(dateStr, periodNum, taskText){
   const key=`${dateStr}_P${periodNum}`;
   recordHistory();
   if(!data.tasks[key])data.tasks[key]=[];
-  data.tasks[key].push({id:Date.now()+Math.random(),text:taskText,done:false});
+  data.tasks[key].push({id:Date.now()+Math.random(),text:taskText,done:false,time:''});
   save(); renderWeek(); return true;
 }
 
@@ -1813,44 +1900,45 @@ function addFree(ds,suffix){
 function addAfter(ds){
   const fKey=`${ds}-after`;
   const inp=document.getElementById(`ti-${fKey}`);
-  const timInp=document.getElementById(`tm-${fKey}`);
   const txt=inp?.value.trim(); if(!txt)return;
   recordHistory();
-  const time=timInp?.value||'';
   if(!data.freeTasks[fKey])data.freeTasks[fKey]=[];
-  data.freeTasks[fKey].push({id:Date.now()+Math.random(),text:txt,done:false,time});
+  data.freeTasks[fKey].push({id:Date.now()+Math.random(),text:txt,done:false,time:''});
   inp.value='';
-  // Reset time pill
-  if(timInp) timInp.value='';
-  afterTimeClear(ds);
   save();
   renderWeek();
 }
 
-// Called when the native time input changes — show the pill, hide the clock button
-function afterTimeChanged(ds){
-  const fKey=`${ds}-after`;
-  const val=document.getElementById(`tm-${fKey}`)?.value;
-  const pill=document.getElementById(`tp-${fKey}`);
-  const btn=document.getElementById(`tb-${fKey}`);
-  const lbl=document.getElementById(`tpl-${fKey}`);
-  if(val && pill && btn && lbl){
-    // Format as 12h for display
-    const [h,m]=val.split(':');
-    const hr=parseInt(h,10);
-    lbl.textContent=`${hr===0?12:hr>12?hr-12:hr}:${m} ${hr<12?'AM':'PM'}`;
-    pill.classList.add('has-time');
-    btn.style.display='none';
-  }
+let taskEditState=null;
+function openTaskEditor(kind,key,id){
+  const list=kind==='task'?(data.tasks[key]||[]):(data.freeTasks[key]||[]);
+  const task=list.find(item=>item.id==id); if(!task)return;
+  taskEditState={kind,key,id};
+  document.getElementById('task-edit-text').value=task.text||'';
+  document.getElementById('task-edit-time').value=task.time||'';
+  openMod('taskeditmod');
+  setTimeout(()=>document.getElementById('task-edit-text').focus(),80);
 }
-
-// Called by the × on the pill — clear time and go back to clock button
-function afterTimeClear(ds){
-  const fKey=`${ds}-after`;
-  const pill=document.getElementById(`tp-${fKey}`);
-  const btn=document.getElementById(`tb-${fKey}`);
-  if(pill) pill.classList.remove('has-time');
-  if(btn)  btn.style.display='';
+function taskEditorStartTimer(){
+  if(!taskEditState)return;
+  const list=taskEditState.kind==='task'?(data.tasks[taskEditState.key]||[]):(data.freeTasks[taskEditState.key]||[]);
+  const task=list.find(item=>item.id==taskEditState.id); if(!task)return;
+  closeMod('taskeditmod'); startTaskTimer(task.text);
+}
+function deleteTaskFromEditor(){
+  if(!taskEditState)return;
+  const {kind,key,id}=taskEditState;
+  if(kind==='task') delTask(key,id); else delFree(key,id);
+  closeMod('taskeditmod'); taskEditState=null;
+}
+function saveTaskEdit(){
+  if(!taskEditState)return;
+  const list=taskEditState.kind==='task'?(data.tasks[taskEditState.key]||[]):(data.freeTasks[taskEditState.key]||[]);
+  const task=list.find(item=>item.id==taskEditState.id); if(!task)return;
+  const text=document.getElementById('task-edit-text').value.trim();
+  if(!text){toast('Task wording cannot be empty');return;}
+  recordHistory(); task.text=text; task.time=document.getElementById('task-edit-time').value||'';
+  save(); renderWeek(); closeMod('taskeditmod'); taskEditState=null;
 }
 
 function toggleTask(key,id){
@@ -1885,7 +1973,8 @@ function renderTasks(el,key){
   // Real tasks
   tasks.forEach(t=>{
     const li=document.createElement('li'); li.className='tki';
-    li.innerHTML=`<div class="tkc${t.done?' done':''}" onclick="toggleTask('${key}',${t.id})" tabindex="0"></div><span class="tkt${t.done?' done':''}" onclick="openMoveTask('task','${key}',${t.id})" title="Click to move this task">${esc(t.text)}</span><span class="task-tools"><button class="task-tool" onclick="startTaskTimerEncoded('${encodeURIComponent(t.text)}')" title="Time this task">◷</button><button class="tkd" onclick="delTask('${key}',${t.id})">×</button></span>`;
+    const timeLabel=t.time?`<span class="task-time">${t.time}</span>`:'';
+    li.innerHTML=`<div class="tkc${t.done?' done':''}" onclick="toggleTask('${key}',${t.id})" tabindex="0"></div>${timeLabel}<span class="tkt${t.done?' done':''}" onclick="openMoveTask('task','${key}',${t.id})" title="Click to move this task">${esc(t.text)}</span><span class="task-tools"><button class="task-settings-btn" onclick="openTaskEditor('task','${key}',${t.id})" title="Task options">⚙</button></span>`;
     el.appendChild(li);
   });
 }
@@ -1908,7 +1997,8 @@ function renderFreeTasks(el,fKey){
   });
   tasks.forEach(t=>{
     const li=document.createElement('li'); li.className='tki';
-    li.innerHTML=`<div class="tkc${t.done?' done':''}" onclick="toggleFree('${fKey}',${t.id})" tabindex="0"></div><span class="tkt${t.done?' done':''}" onclick="openMoveTask('free','${fKey}',${t.id})" title="Click to move this task">${esc(t.text)}</span><span class="task-tools"><button class="task-tool" onclick="startTaskTimerEncoded('${encodeURIComponent(t.text)}')" title="Time this task">◷</button><button class="tkd" onclick="delFree('${fKey}',${t.id})">×</button></span>`;
+    const timeLabel=t.time?`<span class="task-time">${t.time}</span>`:'';
+    li.innerHTML=`<div class="tkc${t.done?' done':''}" onclick="toggleFree('${fKey}',${t.id})" tabindex="0"></div>${timeLabel}<span class="tkt${t.done?' done':''}" onclick="openMoveTask('free','${fKey}',${t.id})" title="Click to move this task">${esc(t.text)}</span><span class="task-tools"><button class="task-settings-btn" onclick="openTaskEditor('free','${fKey}',${t.id})" title="Task options">⚙</button></span>`;
     el.appendChild(li);
   });
 }
@@ -1928,8 +2018,8 @@ function renderAfterTasks(el,fKey){
   });
   tasks.forEach(t=>{
     const li=document.createElement('li'); li.className='tki';
-    const timeLabel=t.time?`<span style="font-size:10px;color:var(--primary);font-weight:700;white-space:nowrap">${t.time}</span>`:'';
-    li.innerHTML=`<div class="tkc${t.done?' done':''}" onclick="toggleFree('${fKey}',${t.id})" tabindex="0"></div>${timeLabel}<span class="tkt${t.done?' done':''}" onclick="openMoveTask('free','${fKey}',${t.id})" title="Click to move this task">${esc(t.text)}</span><span class="task-tools"><button class="task-tool" onclick="startTaskTimerEncoded('${encodeURIComponent(t.text)}')" title="Time this task">◷</button><button class="tkd" onclick="delFree('${fKey}',${t.id})">×</button></span>`;
+    const timeLabel=t.time?`<span class="task-time">${t.time}</span>`:'';
+    li.innerHTML=`<div class="tkc${t.done?' done':''}" onclick="toggleFree('${fKey}',${t.id})" tabindex="0"></div>${timeLabel}<span class="tkt${t.done?' done':''}" onclick="openMoveTask('free','${fKey}',${t.id})" title="Click to move this task">${esc(t.text)}</span><span class="task-tools"><button class="task-settings-btn" onclick="openTaskEditor('free','${fKey}',${t.id})" title="Task options">⚙</button></span>`;
     el.appendChild(li);
   });
 }
@@ -1976,16 +2066,75 @@ function renderCalendar(){
   for(let i=0;i<42;i++){const d=addDays(start,i), b=document.createElement('button'); const ds=toDS(d); b.className='calendar-day'+(d.getMonth()!==calendarMonth.getMonth()?' muted ':'')+(ds===toDS(new Date())?' today':'')+(wkStart&&ds===toDS(wkStart)?' selected':''); b.textContent=d.getDate(); b.title=`Open week of ${ds}`; b.onclick=()=>{wkStart=getWkStart(d);renderWeek();closeMod('calmod');}; grid.appendChild(b);}
 }
 
-function openTimer(){ document.getElementById('timer-task').textContent=timerTask||'No task selected'; updateTimerDisplay(); openMod('timermod'); }
+function openTimer(){
+  const hourSelect=document.getElementById('timer-alarm-hour');
+  if(!hourSelect.options.length) for(let hour=1;hour<=12;hour++) hourSelect.add(new Option(String(hour),String(hour)));
+  const minuteSelect=document.getElementById('timer-alarm-minute');
+  if(!minuteSelect.options.length) for(let minute=0;minute<60;minute+=5){const value=String(minute).padStart(2,'0');minuteSelect.add(new Option(value,value));}
+  document.getElementById('timer-task').textContent=timerTask||'No task selected'; syncTimerInputs(); updateTimerDisplay(); openMod('timermod');
+}
 function startTaskTimer(text){ timerTask=text; openTimer(); }
 function startTaskTimerEncoded(text){ startTaskTimer(decodeURIComponent(text)); }
-function updateTimerDisplay(){const m=String(Math.floor(timerSeconds/60)).padStart(2,'0'),s=String(timerSeconds%60).padStart(2,'0');document.getElementById('timer-display').textContent=`${m}:${s}`;}
+function syncTimerInputs(){
+  document.getElementById('timer-minutes').value=Math.max(0,Math.floor(timerSeconds/60));
+  document.getElementById('timer-seconds').value=Math.max(0,timerSeconds%60);
+  const [alarmHour,alarmMinute]=timerAlarmAt ? timerAlarmAt.split(':').map(Number) : [12,0];
+  document.getElementById('timer-alarm-hour').value=String(alarmHour%12||12);
+  document.getElementById('timer-alarm-minute').value=String(alarmMinute).padStart(2,'0');
+  document.getElementById('timer-alarm-ampm').value=alarmHour>=12?'PM':'AM';
+  document.getElementById('timer-seconds-field').style.display=timerMode==='alarm'?'none':'';
+  document.getElementById('timer-alarm-field').style.display=timerMode==='alarm'?'':'none';
+  document.getElementById('timer-minutes-label').textContent=timerMode==='stopwatch'?'Starting minutes':'Minutes';
+}
+function setTimerMode(mode){
+  if(timerHandle){clearInterval(timerHandle);timerHandle=null;}
+  timerMode=mode;
+  document.querySelectorAll('.timer-mode-tab').forEach(tab=>tab.classList.toggle('active',tab.dataset.mode===mode));
+  if(mode==='timer') timerSeconds=25*60;
+  if(mode==='stopwatch') timerSeconds=0;
+  if(mode==='alarm') timerSeconds=getAlarmSeconds();
+  document.getElementById('timer-toggle').textContent='Start';
+  document.getElementById('timer-panel').classList.remove('running');
+  syncTimerInputs(); updateTimerDisplay();
+}
+function getAlarmSeconds(){
+  if(!timerAlarmAt)return 0;
+  const [hours,minutes]=timerAlarmAt.split(':').map(Number); const now=new Date(); const alarm=new Date(now);
+  alarm.setHours(hours||0,minutes||0,0,0); if(alarm<=now)alarm.setDate(alarm.getDate()+1);
+  return Math.max(0,Math.round((alarm-now)/1000));
+}
+function applyTimerSettings(){
+  if(timerMode==='alarm'){
+    const hour12=parseInt(document.getElementById('timer-alarm-hour').value||'12',10);
+    const minute=document.getElementById('timer-alarm-minute').value||'00';
+    const isPm=document.getElementById('timer-alarm-ampm').value==='PM';
+    const hour24=String((hour12%12)+(isPm?12:0)).padStart(2,'0');
+    timerAlarmAt=`${hour24}:${minute}`; timerSeconds=getAlarmSeconds();
+  }
+  else {const minutes=Math.max(0,parseInt(document.getElementById('timer-minutes').value||'0',10));const seconds=Math.min(59,Math.max(0,parseInt(document.getElementById('timer-seconds').value||'0',10)));timerSeconds=timerMode==='stopwatch'?minutes*60+seconds:Math.max(1,minutes*60+seconds);}
+  updateTimerDisplay();
+}
+function updateTimerDisplay(){
+  const m=String(Math.floor(timerSeconds/60)).padStart(2,'0'),s=String(timerSeconds%60).padStart(2,'0');
+  const display=document.getElementById('timer-display'); display.textContent=`${m}:${s}`; display.classList.remove('tick'); void display.offsetWidth; display.classList.add('tick');
+}
 function toggleTimer(){
   const button=document.getElementById('timer-toggle');
   if(timerHandle){clearInterval(timerHandle);timerHandle=null;button.textContent='Start';return;}
-  button.textContent='Pause'; timerHandle=setInterval(()=>{if(timerSeconds<=0){clearInterval(timerHandle);timerHandle=null;button.textContent='Start';toast('Timer complete');return;}timerSeconds--;updateTimerDisplay();},1000);
+  if(timerMode==='alarm'&&!timerAlarmAt){toast('Choose an alarm time first');return;}
+  button.textContent='Pause'; document.getElementById('timer-panel').classList.add('running');
+  timerHandle=setInterval(()=>{
+    if(timerMode==='stopwatch'){timerSeconds++;updateTimerDisplay();return;}
+    if(timerSeconds<=0){clearInterval(timerHandle);timerHandle=null;button.textContent='Start';document.getElementById('timer-panel').classList.remove('running');toast(timerMode==='alarm'?'Alarm reached':'Timer complete');return;}
+    timerSeconds--;updateTimerDisplay();
+  },1000);
 }
-function resetTimer(){if(timerHandle){clearInterval(timerHandle);timerHandle=null;}timerSeconds=25*60;document.getElementById('timer-toggle').textContent='Start';updateTimerDisplay();}
+function stopTimer(){
+  if(timerHandle){clearInterval(timerHandle);timerHandle=null;}
+  timerSeconds=0; document.getElementById('timer-toggle').textContent='Start';
+  document.getElementById('timer-panel').classList.remove('running'); syncTimerInputs(); updateTimerDisplay();
+}
+function resetTimer(){if(timerHandle){clearInterval(timerHandle);timerHandle=null;}if(timerMode==='stopwatch')timerSeconds=0;else if(timerMode==='alarm')timerSeconds=getAlarmSeconds();else timerSeconds=25*60;document.getElementById('timer-toggle').textContent='Start';document.getElementById('timer-panel').classList.remove('running');syncTimerInputs();updateTimerDisplay();}
 
 // ─── DAY OVERRIDE ────────────────────────────────────────
 function openDayMod(ds){
@@ -2052,7 +2201,10 @@ function setAutoType(t){
     const typeBtn = document.getElementById(`auto-type-${x}`);
     const pickEl = document.getElementById(`auto-${x}-pick`);
     if(typeBtn) typeBtn.classList.toggle('active', x===t);
-    if(pickEl) pickEl.style.display = x===t ? 'block' : 'none';
+    if(pickEl){
+      pickEl.style.display = x===t ? 'block' : 'none';
+      if(x===t){pickEl.classList.remove('reveal-in');void pickEl.offsetWidth;pickEl.classList.add('reveal-in');}
+    }
   });
   // "same class slot" option only makes sense for class trigger
   const sameOpt = document.querySelector('#auto-where option[value="same"]');
@@ -2164,6 +2316,7 @@ function renderAutoList(){
       <button class="auto-toggle ${a.enabled?'on':'off'}" onclick="toggleAutomation(${a.id})"></button>
       <button onclick="deleteAutomation(${a.id})" style="background:none;border:none;cursor:pointer;color:var(--danger);font-size:15px;padding:2px">×</button>
     `;
+    row.style.animationDelay=`${Math.min(autos.indexOf(a),5)*45}ms`;
     list.appendChild(row);
   });
 }
@@ -2230,6 +2383,8 @@ function getAutoTasksForAfter(date){
 
 // ─── BOOT ────────────────────────────────────────────────
 async function boot(){
+  bindBackButtons();
+
   // Listen for auth state changes (handles token refresh and tab switches)
   supa.auth.onAuthStateChange(async (event, session) => {
     if(event === 'SIGNED_IN' && session && !supaUser){
