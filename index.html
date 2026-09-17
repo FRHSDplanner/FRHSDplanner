@@ -65,6 +65,7 @@
     .ld-pills{display:flex;gap:4px;flex-wrap:wrap;padding:4px 2px 2px}
     .ld-pill{padding:2px 8px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface2);cursor:pointer;font-size:10px;font-weight:700;color:var(--ts);transition:all .15s;user-select:none}
     .ld-pill.on{border-color:var(--primary);background:var(--primary);color:#fff}
+    .ld-pill:disabled{cursor:not-allowed;opacity:.35;border-style:dashed}
     /* color swatch button */
     .color-swatch{width:22px;height:22px;border-radius:50%;border:2px solid rgba(0,0,0,.18);cursor:pointer;flex-shrink:0;padding:0;outline:none;transition:transform .15s,box-shadow .15s}
     .color-swatch:hover{transform:scale(1.08);box-shadow:0 0 0 3px var(--pl)}
@@ -1231,12 +1232,19 @@ function load(){
 // ─── SCHEDULE LOGIC ──────────────────────────────────────
 // Count schooldays (Mon-Fri, non-weekend) between two dates.
 // Returns positive if d > from, negative if d < from.
+function isSchoolDayDate(date){
+  const ds = toDS(dateOnly(date));
+  if (data.dayOff[ds]) return false;
+  if (data.dayOn[ds]) return true;
+  return !WE.has(date.getDay());
+}
+
 function schooldayDiff(from, to){
   if(from.getTime()===to.getTime()) return 0;
   let count=0, step=to>from?1:-1, cur=new Date(from);
   while(cur.getTime()!==to.getTime()){
     cur.setDate(cur.getDate()+step);
-    if(!WE.has(cur.getDay())) count+=step;
+    if(isSchoolDayDate(cur)) count+=step;
   }
   return count;
 }
@@ -1245,21 +1253,23 @@ function getDayLetter(date){
   const d=dateOnly(date);
   const ds=toDS(d);
 
-  // 1. Exact override for this date
+  // 1. Explicit day-off dates are not part of the school rotation
+  if(data.dayOff[ds] && !data.dayOn[ds]) return null;
+
+  // 2. Exact override for this date
   if(data.dayOv[ds]) return data.dayOv[ds];
 
-  // 2. Weekends get null (unless user forced a day on them via dayOn)
+  // 3. Weekends get null (unless user forced a day on them via dayOn)
   if(WE.has(d.getDay()) && !data.dayOn[ds]) return null;
 
   // 3. Find nearest override anchor to cascade from
-  //    Search dayOv keys for school days only; find the one with smallest abs distance
+  //    Search dayOv keys for school days only; Day-off overrides are skipped
   const ovKeys=Object.keys(data.dayOv);
   if(ovKeys.length>0){
     let bestKey=null, bestDist=Infinity;
     ovKeys.forEach(k=>{
       const kd=dateOnly(new Date(k+'T12:00:00'));
-      // Only use overrides that are on school days (or dayOn days)
-      if(WE.has(kd.getDay()) && !data.dayOn[k]) return;
+      if(!isSchoolDayDate(kd)) return;
       const dist=Math.abs(schooldayDiff(kd,d));
       if(dist<bestDist){ bestDist=dist; bestKey=k; }
     });
@@ -1521,6 +1531,69 @@ function nextAvailableColor(preferred,usedColors,fallbackIndex){
   return PCOLS[start];
 }
 
+function getDoubleLabDayStatus(pNum, letter){
+  const slots = DAY_SLOTS[letter] || [];
+  const idx = slots.indexOf(pNum);
+  if (idx === -1) {
+    return { valid: false, reason: 'That day is invalid for this class.' };
+  }
+  if (idx === 2 || idx === 4) {
+    return { valid: false, reason: idx === 2 ? 'That day is invalid: the next period is lunch.' : 'That day is invalid: the day is already over.' };
+  }
+  return { valid: true, reason: 'Available for a double lab.' };
+}
+
+function getSelectableDoubleLabDays(pNum){
+  return LETTERS.filter(letter => getDoubleLabDayStatus(pNum, letter).valid);
+}
+
+function syncLabRow(row){
+  const pNum = Number(row.dataset.p || 0);
+  const pill = row.querySelector('.lab-pill');
+  const labWrap = row.querySelector('.prow-labs');
+  if (!pill || !labWrap) return;
+  const isLab = pill.dataset.on === '1';
+  const buttons = [...row.querySelectorAll('.ld-pill')];
+  labWrap.style.display = isLab ? 'flex' : 'none';
+  buttons.forEach(button => {
+    const letter = button.dataset.v;
+    const status = getDoubleLabDayStatus(pNum, letter);
+    const allowed = isLab && status.valid;
+    const selected = button.classList.contains('on');
+    button.disabled = !allowed;
+    button.title = status.reason;
+    if (!allowed && selected) button.classList.remove('on');
+  });
+  if (isLab) {
+    const picks = buttons.filter(button => button.classList.contains('on'));
+    if (picks.length > 2) {
+      picks.slice(2).forEach(button => button.classList.remove('on'));
+    }
+  }
+}
+
+function toggleLabDay(button){
+  const row = button.closest('.prow');
+  const pill = row.querySelector('.lab-pill');
+  if (!pill || pill.dataset.on !== '1') return;
+  if (button.disabled) {
+    toast(getDoubleLabDayStatus(Number(row.dataset.p || 0), button.dataset.v).reason);
+    return;
+  }
+  const selected = button.classList.contains('on');
+  const selectedCount = row.querySelectorAll('.ld-pill.on').length;
+  if (!selected && selectedCount >= 2) {
+    toast('You can only have a double lab on up to 2 letter days.');
+    return;
+  }
+  button.classList.toggle('on');
+  const picks = [...row.querySelectorAll('.ld-pill.on')];
+  if (picks.length > 2) {
+    picks.slice(2).forEach(item => item.classList.remove('on'));
+    toast('You can only have a double lab on up to 2 letter days.');
+  }
+}
+
 function addPRow(listId,def,idx){
   const list=document.getElementById(listId);
   const pNum=def?.num??(idx+1);
@@ -1541,16 +1614,46 @@ function addPRow(listId,def,idx){
       </div>
     </div>
     <div class="prow-labs ld-pills" style="display:${isLab?'flex':'none'}">
-      ${LETTERS.map(l=>`<span class="ld-pill${labDays.includes(l)?' on':''}" data-v="${l}" onclick="this.classList.toggle('on')">${l}</span>`).join('')}
+      ${LETTERS.map(l=>{
+        const valid = isLab && getDoubleLabDayStatus(pNum, l).valid;
+        const selected = labDays.includes(l) && valid;
+        const extra = selected ? ' on' : '';
+        return `<span class="ld-pill${extra}" data-v="${l}" ${valid ? '' : 'disabled'} onclick="toggleLabDay(this)" title="${getDoubleLabDayStatus(pNum, l).reason}">${l}</span>`;
+      }).join('')}
     </div>
   `;
   list.appendChild(row);
+  syncLabRow(row);
 }
 
 function toggleLabPill(pill){
-  const on=pill.dataset.on==='1';
-  pill.dataset.on=on?'0':'1';
-  pill.closest('.prow').querySelector('.prow-labs').style.display=on?'none':'flex';
+  const row = pill.closest('.prow');
+  const otherLab = [...row.parentElement.querySelectorAll('.lab-pill')].find(other => other !== pill && other.dataset.on === '1');
+  const on = pill.dataset.on === '1';
+
+  if (otherLab && !on) {
+    toast('Only one subject can be a double lab.');
+    otherLab.dataset.on = '0';
+    const otherRow = otherLab.closest('.prow');
+    otherRow.querySelectorAll('.ld-pill').forEach(button => {
+      button.classList.remove('on');
+      button.disabled = true;
+    });
+    syncLabRow(otherRow);
+  }
+
+  if (on) {
+    pill.dataset.on = '0';
+    row.querySelectorAll('.ld-pill').forEach(button => {
+      button.classList.remove('on');
+      button.disabled = true;
+    });
+    syncLabRow(row);
+    return;
+  }
+
+  pill.dataset.on = '1';
+  syncLabRow(row);
 }
 
 function openColorPalette(button){
@@ -1589,13 +1692,27 @@ function chooseRowColor(button,color){
 
 function collectP(listId){
   cfg.periods=[];
+  const labRows=[...document.querySelectorAll(`#${listId} .prow`)].filter(row => row.querySelector('.lab-pill')?.dataset.on === '1');
+  if (labRows.length > 1) {
+    labRows.slice(1).forEach(row => {
+      const pill = row.querySelector('.lab-pill');
+      if (!pill) return;
+      pill.dataset.on = '0';
+      row.querySelectorAll('.ld-pill').forEach(button => {
+        button.classList.remove('on');
+        button.disabled = true;
+      });
+      syncLabRow(row);
+    });
+  }
+
   document.querySelectorAll(`#${listId} .prow`).forEach(row=>{
     const pNum=parseInt(row.dataset.p,10);
     const inp=row.querySelector('input[type="text"]');
     const name=inp?.value.trim()||'';
     const color=inp?.dataset.color||PCOLS[(pNum-1)%PCOLS.length];
     const isLab=row.querySelector('.lab-pill')?.dataset.on==='1'||false;
-    const labDays=isLab?[...row.querySelectorAll('.ld-pill.on')].map(c=>c.dataset.v):[];
+    const labDays=isLab ? [...row.querySelectorAll('.ld-pill.on')].map(c=>c.dataset.v).filter(letter => getDoubleLabDayStatus(pNum, letter).valid).slice(0,2) : [];
     if(name) cfg.periods.push({num:pNum,name,color,isLab,labDays});
   });
 }
@@ -2300,9 +2417,9 @@ function renderFreeTasks(el,fKey){
     }
   }catch(e){}
   el.innerHTML='';
-  const sectionBadge=document.getElementById(`lc-${fKey}`);
-  const freeBadge=document.getElementById(`fc-${fKey}`);
-  const badge=sectionBadge||freeBadge;
+  const sectionBadge = el.closest('.lunch')?.querySelector('.stc') || document.getElementById(`lc-${fKey}`);
+  const freeBadge = el.closest('.slot')?.querySelector('.stc') || document.getElementById(`fc-${fKey}`);
+  const badge = sectionBadge || freeBadge;
   if(badge){
     const total=tasks.length+autoItems.length;
     const done=tasks.filter(t=>t.done).length+autoItems.filter(t=>isAutoDone(t.date,t.id)).length;
